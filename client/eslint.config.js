@@ -18,7 +18,7 @@ export default tseslint.config(
         ...globals.browser,
       },
       parserOptions: {
-        project: true,
+        projectService: true,
       },
     },
     plugins: {
