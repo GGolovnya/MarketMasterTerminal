@@ -8,7 +8,8 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-import { connectWebSocket, TickerData } from './api/binance';
+import { connectWebSocket, TickerData } from '../api/binanceAPI';
+import { styles } from '../style/components.styles';
 
 function CryptoList() {
   const [cryptoList, setCryptoList] = useState<TickerData[]>([]);
@@ -33,7 +34,7 @@ function CryptoList() {
 
   return (
     <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="crypto table">
+      <Table sx={styles.table} aria-label="crypto table">
         <TableHead>
           <TableRow>
             <TableCell>Пара</TableCell>
@@ -51,9 +52,7 @@ function CryptoList() {
               <TableCell align="right">${Number(crypto.price).toFixed(2)}</TableCell>
               <TableCell
                 align="right"
-                sx={{
-                  color: Number(crypto.priceChangePercent) >= 0 ? 'success.main' : 'error.main',
-                }}
+                sx={styles.priceChange(Number(crypto.priceChangePercent))}
               >
                 {Number(crypto.priceChangePercent).toFixed(2)}%
               </TableCell>

@@ -1,12 +1,13 @@
 import { Container, Box, Typography } from '@mui/material';
-import CryptoList from './сryptoList';
+import CryptoList from './components/сryptoList';
+import { styles } from './style/components.styles';
 
 function App() {
   return (
     <Container maxWidth="lg">
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          MarketMasterTerminal
+      <Box sx={styles.container}>
+        <Typography {...styles.pageTitle}>
+        Market Master Terminal
         </Typography>
         <CryptoList />
       </Box>
