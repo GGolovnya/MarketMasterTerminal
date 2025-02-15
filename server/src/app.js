@@ -8,9 +8,10 @@ const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
 const { PORT } = process.env;
+const { CORS_CONFIG } = process.env;
 
 const corsConfig = {
-  origin: 'http://localhost:5173',
+  origin: CORS_CONFIG,
   credentials: true,
 };
 
@@ -20,7 +21,7 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.use('/api/v1', apiRouter);
+app.use('/api', apiRouter);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
