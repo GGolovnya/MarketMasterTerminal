@@ -5,6 +5,6 @@ const balance = require("./balance.api.router.js");
 
 router.use("/auth", authRouter);
 router.use("/token", tokenRouter);
-router.use("/balance", tokenRouter);
+router.use("/balance", balance); // Исправлено: используем правильный роутер balance
 
 module.exports = router;

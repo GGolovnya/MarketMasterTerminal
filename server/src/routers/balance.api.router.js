@@ -1,4 +1,4 @@
-// routes/balance.router.js
+// routes/balance.api.router.js
 const router = require('express').Router();
 const Binance = require('node-binance-api');
 
@@ -7,14 +7,12 @@ const binance = new Binance().options({
   APISECRET: process.env.BINANCE_API_SECRET
 });
 
-router.get('/balance', async (req, res) => {
+router.get('/', async (req, res) => { // Изменено с '/balance' на '/'
   console.log('Получен запрос на получение баланса');
   try {
     console.log('Попытка подключения к Binance API...');
     const balance = await binance.balance();
-    console.log('Ответ от Binance:', balance);
     const usdtBalance = balance.USDT.available;
-    console.log('Баланс USDT:', usdtBalance);
     res.json({ balance: usdtBalance });
   } catch (error) {
     console.error('Детали ошибки:', error);
