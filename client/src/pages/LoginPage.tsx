@@ -12,7 +12,8 @@ import {
   IconButton,
   Snackbar,
   Stack,
-  Divider
+  Divider,
+  Link
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { styles } from '../style/components.styles';
@@ -77,6 +78,10 @@ function Login() {
     } catch (err: any) {
       setError('Ошибка при входе через GitHub');
     }
+  };
+
+  const handleForgotPassword = () => {
+    navigate('/reset-password');
   };
 
   return (
@@ -146,8 +151,24 @@ function Login() {
                   </InputAdornment>
                 ),
               }}
-              sx={{ mb: 3 }}
+              sx={{ mb: 1 }}
             />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Link
+                component="button"
+                variant="body2"
+                onClick={handleForgotPassword}
+                sx={{ 
+                  color: '#90caf9',
+                  textDecoration: 'none',
+                  '&:hover': {
+                    textDecoration: 'underline'
+                  }
+                }}
+              >
+                Забыли пароль?
+              </Link>
+            </Box>
             <Button
               type="submit"
               variant="contained"

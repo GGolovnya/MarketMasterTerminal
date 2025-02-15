@@ -1,4 +1,3 @@
-// src/components/Navigation.tsx
 import { AppBar, Toolbar, Button, Box } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';

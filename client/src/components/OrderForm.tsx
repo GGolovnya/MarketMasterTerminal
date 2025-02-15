@@ -21,8 +21,22 @@ function OrderForm() {
   };
 
   return (
-    <Box sx={styles.orderForm}>
-      <Typography variant="h6" gutterBottom>
+    <Box sx={{
+      ...styles.orderForm,
+      p: 3,
+      borderRadius: 2,
+      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+    }}>
+      <Typography
+        variant="h6"
+        gutterBottom
+        sx={{
+          mb: 3,
+          fontWeight: 600,
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          pb: 2,
+        }}
+      >
         Создать ордер
       </Typography>
       <ToggleButtonGroup
@@ -30,7 +44,13 @@ function OrderForm() {
         exclusive
         onChange={(_, value) => value && setOrderType(value)}
         fullWidth
-        sx={styles.toggleGroup}
+        sx={{
+          mb: 3,
+          '& .MuiToggleButton-root': {
+            py: 1.5,
+            borderRadius: 1,
+          },
+        }}
       >
         <ToggleButton value="buy" sx={styles.buyButton}>
           Купить
@@ -48,6 +68,12 @@ function OrderForm() {
           onChange={(e) => setPrice(e.target.value)}
           margin="normal"
           required
+          sx={{
+            mb: 2,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 1,
+            },
+          }}
         />
         <TextField
           fullWidth
@@ -57,12 +83,23 @@ function OrderForm() {
           onChange={(e) => setAmount(e.target.value)}
           margin="normal"
           required
+          sx={{
+            mb: 3,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 1,
+            },
+          }}
         />
         <Button
           type="submit"
           variant="contained"
           fullWidth
-          sx={orderType === 'buy' ? styles.buyButton : styles.sellButton}
+          sx={{
+            ...orderType === 'buy' ? styles.buyButton : styles.sellButton,
+            py: 1.5,
+            borderRadius: 1,
+            fontWeight: 600,
+          }}
         >
           {orderType === 'buy' ? 'Купить' : 'Продать'}
         </Button>
