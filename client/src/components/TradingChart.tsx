@@ -24,7 +24,7 @@ function TradingChart() {
         enable_publishing: false,
         allow_symbol_change: true,
         save_image: false,
-        height: '100%',
+        height: '550px',
         width: '100%',
       });
     }
@@ -34,7 +34,14 @@ function TradingChart() {
     <Box
       ref={containerRef}
       id="tradingview_chart"
-      sx={chartStyles.container}
+      sx={{
+        ...chartStyles.container,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: '100%',
+        height: '100%',
+      }}
     />
   );
 }

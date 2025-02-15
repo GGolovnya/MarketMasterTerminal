@@ -5,7 +5,8 @@ export const chartStyles = {
     backgroundColor: 'rgba(18, 18, 18, 0.95)',
     borderRadius: '12px',
     padding: '24px',
-    height: '500px',
+    height: '100%',
+    width: '100%',
   },
 
   // Заголовок графика

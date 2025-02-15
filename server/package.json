@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@binance/connector": "^3.6.1",
     "@types/react-router-dom": "^5.3.3",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
@@ -22,6 +23,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
+    "node-binance-api": "^0.13.4",
     "pg": "^8.13.1",
     "pg-hstore": "^2.3.4",
     "react-router-dom": "^7.1.5",
