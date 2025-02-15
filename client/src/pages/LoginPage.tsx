@@ -13,12 +13,15 @@ import {
   Snackbar,
   Stack,
   Divider,
-  Link
+  Link,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-import { styles } from '../style/components.styles';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Visibility, VisibilityOff, Email, Google, GitHub } from '@mui/icons-material';
+import { theme } from '../style/theme';
+import { buttonStyles } from '../style/components/buttons';
+import { formStyles } from '../style/components/forms';
+import { layoutStyles } from '../style/components/layout';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -45,7 +48,7 @@ function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    
+
     setLoading(true);
     setError('');
 
@@ -86,20 +89,9 @@ function Login() {
 
   return (
     <Container maxWidth="sm">
-      <Box sx={{
-        ...styles.loginContainer,
-        minHeight: 'calc(100vh - 60px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        <Paper elevation={6} sx={{
-          p: 4,
-          width: '100%',
-          borderRadius: '12px',
-          backgroundColor: 'rgba(18, 18, 18, 0.95)',
-        }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ color: '#90caf9' }}>
+      <Box sx={layoutStyles.flex}>
+        <Paper sx={formStyles.container}>
+          <Typography variant="h4" component="h1" gutterBottom align="center" color={theme.palette.primary.main}>
             Вход в систему
           </Typography>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -122,7 +114,7 @@ function Login() {
                   </InputAdornment>
                 ),
               }}
-              sx={{ mb: 2 }}
+              sx={formStyles.input}
             />
             <TextField
               fullWidth
@@ -151,19 +143,19 @@ function Login() {
                   </InputAdornment>
                 ),
               }}
-              sx={{ mb: 1 }}
+              sx={formStyles.input}
             />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
               <Link
                 component="button"
                 variant="body2"
                 onClick={handleForgotPassword}
-                sx={{ 
-                  color: '#90caf9',
+                sx={{
+                  color: theme.palette.primary.main,
                   textDecoration: 'none',
                   '&:hover': {
-                    textDecoration: 'underline'
-                  }
+                    textDecoration: 'underline',
+                  },
                 }}
               >
                 Забыли пароль?
@@ -173,14 +165,7 @@ function Login() {
               type="submit"
               variant="contained"
               fullWidth
-              sx={{
-                py: 1.5,
-                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-                '&:hover': {
-                  background: 'linear-gradient(45deg, #1976D2 30%, #1AC6E9 90%)',
-                },
-                mb: 2
-              }}
+              sx={buttonStyles.primary}
               disabled={loading}
             >
               {loading ? <CircularProgress size={24} /> : 'Войти'}
@@ -192,7 +177,7 @@ function Login() {
                 variant="outlined"
                 startIcon={<Google />}
                 onClick={handleGoogleLogin}
-                sx={{ py: 1.2 }}
+                sx={buttonStyles.secondary}
               >
                 Войти через Google
               </Button>
@@ -201,7 +186,7 @@ function Login() {
                 variant="outlined"
                 startIcon={<GitHub />}
                 onClick={handleGithubLogin}
-                sx={{ py: 1.2 }}
+                sx={buttonStyles.secondary}
               >
                 Войти через GitHub
               </Button>

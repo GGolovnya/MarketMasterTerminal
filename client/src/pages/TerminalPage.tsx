@@ -3,32 +3,33 @@ import CryptoList from '../components/CryptoList';
 import TradingChart from '../components/TradingChart';
 import OrderForm from '../components/OrderForm';
 import OpenOrders from '../components/OpenOrders';
-import { styles } from '../style/components.styles';
+import { layoutStyles } from '../style/components/layout';
+import { chartStyles } from '../style/components/charts';
 
 function Terminal() {
   return (
     <Container maxWidth="xl">
-      <Typography variant="h4" component="h1" sx={{ mb: 3 }}>
+      <Typography variant="h4" component="h1" sx={layoutStyles.title}>
         Market Master Terminal
       </Typography>
-      <Grid container spacing={3} sx={styles.dashboardContainer}>
+      <Grid container spacing={3} sx={layoutStyles.grid}>
         <Grid item xs={12} md={8}>
-          <Paper sx={styles.chartPaper}>
+          <Paper sx={chartStyles.container}>
             <TradingChart />
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper sx={styles.ordersPaper}>
+          <Paper sx={layoutStyles.card}>
             <OrderForm />
           </Paper>
         </Grid>
         <Grid item xs={12} md={8}>
-          <Paper>
+          <Paper sx={layoutStyles.card}>
             <CryptoList />
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper sx={styles.openOrdersPaper}>
+          <Paper sx={layoutStyles.card}>
             <OpenOrders />
           </Paper>
         </Grid>

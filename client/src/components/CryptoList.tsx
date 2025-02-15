@@ -9,7 +9,7 @@ import {
   TableRow,
 } from '@mui/material';
 import { connectWebSocket, TickerData } from '../api/binanceAPI';
-import { styles } from '../style/components.styles';
+import { tableStyles } from '../style/components/tables';
 
 function CryptoList() {
   const [cryptoList, setCryptoList] = useState<TickerData[]>([]);
@@ -33,10 +33,10 @@ function CryptoList() {
   }, []);
 
   return (
-    <TableContainer component={Paper}>
-      <Table sx={styles.table} aria-label="crypto table">
+    <TableContainer component={Paper} sx={tableStyles.container}>
+      <Table aria-label="crypto table">
         <TableHead>
-          <TableRow>
+          <TableRow sx={tableStyles.header}>
             <TableCell>Пара</TableCell>
             <TableCell align="right">Цена</TableCell>
             <TableCell align="right">Изменение (24ч)</TableCell>
@@ -45,18 +45,27 @@ function CryptoList() {
         </TableHead>
         <TableBody>
           {cryptoList.map((crypto) => (
-            <TableRow key={crypto.symbol}>
-              <TableCell component="th" scope="row">
+            <TableRow key={crypto.symbol} sx={tableStyles.row}>
+              <TableCell component="th" scope="row" sx={tableStyles.cell}>
                 {crypto.symbol}
               </TableCell>
-              <TableCell align="right">${Number(crypto.price).toFixed(2)}</TableCell>
+              <TableCell align="right" sx={tableStyles.cell}>
+                ${Number(crypto.price).toFixed(2)}
+              </TableCell>
               <TableCell
                 align="right"
-                sx={styles.priceChange(Number(crypto.priceChangePercent))}
+                sx={[
+                  tableStyles.cell,
+                  Number(crypto.priceChangePercent) >= 0
+                    ? tableStyles.positive
+                    : tableStyles.negative,
+                ]}
               >
                 {Number(crypto.priceChangePercent).toFixed(2)}%
               </TableCell>
-              <TableCell align="right">{Number(crypto.volume).toFixed(2)}</TableCell>
+              <TableCell align="right" sx={tableStyles.cell}>
+                {Number(crypto.volume).toFixed(2)}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

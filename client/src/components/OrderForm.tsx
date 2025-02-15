@@ -7,7 +7,9 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
-import { styles } from '../style/components.styles';
+import { formStyles } from '../style/components/forms';
+import { buttonStyles } from '../style/components/buttons';
+import { layoutStyles } from '../style/components/layout';
 
 function OrderForm() {
   const [orderType, setOrderType] = useState('buy');
@@ -21,12 +23,7 @@ function OrderForm() {
   };
 
   return (
-    <Box sx={{
-      ...styles.orderForm,
-      p: 3,
-      borderRadius: 2,
-      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-    }}>
+    <Box sx={layoutStyles.card}>
       <Typography
         variant="h6"
         gutterBottom
@@ -44,18 +41,12 @@ function OrderForm() {
         exclusive
         onChange={(_, value) => value && setOrderType(value)}
         fullWidth
-        sx={{
-          mb: 3,
-          '& .MuiToggleButton-root': {
-            py: 1.5,
-            borderRadius: 1,
-          },
-        }}
+        sx={{ mb: 3 }}
       >
-        <ToggleButton value="buy" sx={styles.buyButton}>
+        <ToggleButton value="buy" sx={buttonStyles.buy}>
           Купить
         </ToggleButton>
-        <ToggleButton value="sell" sx={styles.sellButton}>
+        <ToggleButton value="sell" sx={buttonStyles.sell}>
           Продать
         </ToggleButton>
       </ToggleButtonGroup>
@@ -68,12 +59,7 @@ function OrderForm() {
           onChange={(e) => setPrice(e.target.value)}
           margin="normal"
           required
-          sx={{
-            mb: 2,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 1,
-            },
-          }}
+          sx={formStyles.input}
         />
         <TextField
           fullWidth
@@ -83,23 +69,13 @@ function OrderForm() {
           onChange={(e) => setAmount(e.target.value)}
           margin="normal"
           required
-          sx={{
-            mb: 3,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 1,
-            },
-          }}
+          sx={formStyles.input}
         />
         <Button
           type="submit"
           variant="contained"
           fullWidth
-          sx={{
-            ...orderType === 'buy' ? styles.buyButton : styles.sellButton,
-            py: 1.5,
-            borderRadius: 1,
-            fontWeight: 600,
-          }}
+          sx={orderType === 'buy' ? buttonStyles.buy : buttonStyles.sell}
         >
           {orderType === 'buy' ? 'Купить' : 'Продать'}
         </Button>

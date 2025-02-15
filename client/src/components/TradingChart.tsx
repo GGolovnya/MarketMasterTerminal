@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Box } from '@mui/material';
-import { styles } from '../style/components.styles';
+import { chartStyles } from '../style/components/charts';
 
 declare global {
   interface Window {
@@ -34,7 +34,7 @@ function TradingChart() {
     <Box
       ref={containerRef}
       id="tradingview_chart"
-      sx={styles.tradingChart}
+      sx={chartStyles.container}
     />
   );
 }

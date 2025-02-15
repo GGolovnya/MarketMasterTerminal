@@ -8,7 +8,8 @@ import {
   Box,
   Paper,
 } from '@mui/material';
-import { styles } from '../style/components.styles';
+import { tableStyles } from '../style/components/tables';
+import { layoutStyles } from '../style/components/layout';
 
 interface Order {
   id: string;
@@ -24,7 +25,7 @@ function OpenOrders() {
   const orders: Order[] = []; // Здесь будут данные из API
 
   return (
-    <Box sx={{ ...styles.openOrders, p: 3, borderRadius: 2 }}>
+    <Box sx={layoutStyles.card}>
       <Typography
         variant="h6"
         gutterBottom
@@ -37,30 +38,25 @@ function OpenOrders() {
       >
         Открытые ордера
       </Typography>
-      <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
-        <Table size="small" sx={{ minWidth: 650 }}>
+      <Paper sx={tableStyles.container}>
+        <Table size="small">
           <TableHead>
-            <TableRow sx={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}>
-              <TableCell sx={{ py: 2 }}>Пара</TableCell>
-              <TableCell sx={{ py: 2 }}>Тип</TableCell>
-              <TableCell align="right" sx={{ py: 2 }}>Цена</TableCell>
-              <TableCell align="right" sx={{ py: 2 }}>Количество</TableCell>
-              <TableCell align="right" sx={{ py: 2 }}>Всего</TableCell>
+            <TableRow sx={tableStyles.header}>
+              <TableCell>Пара</TableCell>
+              <TableCell>Тип</TableCell>
+              <TableCell align="right">Цена</TableCell>
+              <TableCell align="right">Количество</TableCell>
+              <TableCell align="right">Всего</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {orders.map((order) => (
               <TableRow
                 key={order.id}
-                sx={{
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                  },
-                  transition: 'background-color 0.2s',
-                }}
+                sx={tableStyles.row}
               >
-                <TableCell sx={{ py: 2 }}>{order.pair}</TableCell>
-                <TableCell sx={{ py: 2 }}>
+                <TableCell sx={tableStyles.cell}>{order.pair}</TableCell>
+                <TableCell sx={tableStyles.cell}>
                   <Typography
                     color={order.type === 'buy' ? 'success.main' : 'error.main'}
                     sx={{
@@ -77,9 +73,9 @@ function OpenOrders() {
                     {order.type === 'buy' ? 'Покупка' : 'Продажа'}
                   </Typography>
                 </TableCell>
-                <TableCell align="right" sx={{ py: 2 }}>${order.price}</TableCell>
-                <TableCell align="right" sx={{ py: 2 }}>{order.amount}</TableCell>
-                <TableCell align="right" sx={{ py: 2 }}>${order.total}</TableCell>
+                <TableCell align="right" sx={tableStyles.cell}>${order.price}</TableCell>
+                <TableCell align="right" sx={tableStyles.cell}>{order.amount}</TableCell>
+                <TableCell align="right" sx={tableStyles.cell}>${order.total}</TableCell>
               </TableRow>
             ))}
           </TableBody>

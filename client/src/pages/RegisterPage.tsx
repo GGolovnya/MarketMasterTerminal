@@ -10,16 +10,18 @@ import {
   CircularProgress,
   InputAdornment,
   IconButton,
-  Snackbar,
   Checkbox,
   FormControlLabel,
   Stack,
   Divider,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-import { styles } from '../style/components.styles';
 import { useNavigate } from 'react-router-dom';
 import { AccountCircle, Lock, Visibility, VisibilityOff, Email, Google, GitHub } from '@mui/icons-material';
+import { theme } from '../style/theme';
+import { buttonStyles } from '../style/components/buttons';
+import { formStyles } from '../style/components/forms';
+import { layoutStyles } from '../style/components/layout';
 
 function Register() {
   const [username, setUsername] = useState('');
@@ -93,20 +95,9 @@ function Register() {
 
   return (
     <Container maxWidth="sm">
-      <Box sx={{
-        ...styles.loginContainer,
-        minHeight: 'calc(100vh - 60px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        <Paper elevation={6} sx={{
-          p: 4,
-          width: '100%',
-          borderRadius: '12px',
-          backgroundColor: 'rgba(18, 18, 18, 0.95)',
-        }}>
-          <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ color: '#90caf9' }}>
+      <Box sx={layoutStyles.flex}>
+        <Paper sx={formStyles.container}>
+          <Typography variant="h4" component="h1" gutterBottom align="center" color={theme.palette.primary.main}>
             Регистрация
           </Typography>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -128,7 +119,7 @@ function Register() {
                   </InputAdornment>
                 ),
               }}
-              sx={{ mb: 2 }}
+              sx={formStyles.input}
             />
             <TextField
               fullWidth
@@ -147,7 +138,7 @@ function Register() {
                   </InputAdornment>
                 ),
               }}
-              sx={{ mb: 2 }}
+              sx={formStyles.input}
             />
             <TextField
               fullWidth
@@ -176,7 +167,7 @@ function Register() {
                   </InputAdornment>
                 ),
               }}
-              sx={{ mb: 3 }}
+              sx={formStyles.input}
             />
             <FormControlLabel
               control={
@@ -184,11 +175,12 @@ function Register() {
                   checked={acceptPolicy}
                   onChange={(e) => setAcceptPolicy(e.target.checked)}
                   color="primary"
+                  sx={formStyles.checkbox}
                 />
               }
               label={
                 <Typography variant="body2">
-                  Я принимаю <a href="/policy" style={{ color: '#90caf9' }}>пользовательское соглашение</a>
+                  Я принимаю <a href="/policy" style={{ color: theme.palette.primary.main }}>пользовательское соглашение</a>
                 </Typography>
               }
               sx={{ mb: 2 }}
@@ -197,14 +189,7 @@ function Register() {
               type="submit"
               variant="contained"
               fullWidth
-              sx={{
-                py: 1.5,
-                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-                '&:hover': {
-                  background: 'linear-gradient(45deg, #1976D2 30%, #1AC6E9 90%)',
-                },
-                mb: 2,
-              }}
+              sx={buttonStyles.primary}
               disabled={loading || !acceptPolicy}
             >
               {loading ? <CircularProgress size={24} /> : 'Зарегистрироваться'}
@@ -216,7 +201,7 @@ function Register() {
                 variant="outlined"
                 startIcon={<Google />}
                 onClick={handleGoogleSignup}
-                sx={{ py: 1.2 }}
+                sx={buttonStyles.secondary}
               >
                 Продолжить с Google
               </Button>
@@ -225,7 +210,7 @@ function Register() {
                 variant="outlined"
                 startIcon={<GitHub />}
                 onClick={handleGithubSignup}
-                sx={{ py: 1.2 }}
+                sx={buttonStyles.secondary}
               >
                 Продолжить с GitHub
               </Button>
@@ -233,11 +218,6 @@ function Register() {
           </form>
         </Paper>
       </Box>
-      <Snackbar
-        open={!!successMessage}
-        autoHideDuration={3000}
-        message={successMessage}
-      />
     </Container>
   );
 }
