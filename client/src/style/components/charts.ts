@@ -13,7 +13,7 @@ export const chartStyles = {
     fontSize: '1.25rem',
     fontWeight: 600,
     marginBottom: '16px',
-    color: '#ffffff',
+    color: 'rgba(255, 255, 255, 1)',
   },
 
   // Легенда
@@ -48,7 +48,7 @@ export const chartStyles = {
 
   // Линия тренда
   trendLine: {
-    stroke: '#90caf9',
+    stroke: 'rgba(144, 202, 249, 1)',
     strokeWidth: 2,
   },
 };

@@ -33,12 +33,12 @@ export const tableStyles = {
 
   // Положительное значение
   positive: {
-    color: '#4caf50',
+    color: 'rgba(76, 175, 80, 1)',
   },
 
   // Отрицательное значение
   negative: {
-    color: '#f44336',
+    color: 'rgba(244, 67, 54, 1)',
   },
 
   // Пагинация

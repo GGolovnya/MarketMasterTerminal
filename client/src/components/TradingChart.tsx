@@ -24,7 +24,7 @@ function TradingChart() {
         enable_publishing: false,
         allow_symbol_change: true,
         save_image: false,
-        height: '500',
+        height: '100%',
         width: '100%',
       });
     }

@@ -16,7 +16,7 @@ export const Navigation = () => {
   return (
     <AppBar position="static" sx={layoutStyles.navigation}>
       <Toolbar>
-        <Box sx={{ flexGrow: 1 }}>
+        <Box sx={{ flexGrow: 1, display: 'flex', gap: '16px' }}>
           <Button
             color="inherit"
             component={Link}
@@ -38,44 +38,46 @@ export const Navigation = () => {
             </>
           )}
         </Box>
-        {isAuthenticated ? (
-          <>
-            <Button
-              color="inherit"
-              component={Link}
-              to="/profile"
-              sx={buttonStyles.secondary}
-            >
-              Личный кабинет
-            </Button>
-            <Button
-              color="inherit"
-              onClick={handleLogout}
-              sx={buttonStyles.secondary}
-            >
-              Выйти
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button
-              color="inherit"
-              component={Link}
-              to="/login"
-              sx={buttonStyles.secondary}
-            >
-              Войти
-            </Button>
-            <Button
-              color="inherit"
-              component={Link}
-              to="/signup"
-              sx={buttonStyles.primary}
-            >
-              Регистрация
-            </Button>
-          </>
-        )}
+        <Box sx={{ display: 'flex', gap: '16px' }}>
+          {isAuthenticated ? (
+            <>
+              <Button
+                color="inherit"
+                component={Link}
+                to="/profile"
+                sx={buttonStyles.secondary}
+              >
+                Личный кабинет
+              </Button>
+              <Button
+                color="inherit"
+                onClick={handleLogout}
+                sx={buttonStyles.secondary}
+              >
+                Выйти
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                color="inherit"
+                component={Link}
+                to="/login"
+                sx={buttonStyles.secondary}
+              >
+                Войти
+              </Button>
+              <Button
+                color="inherit"
+                component={Link}
+                to="/signup"
+                sx={buttonStyles.primary}
+              >
+                Регистрация
+              </Button>
+            </>
+          )}
+        </Box>
       </Toolbar>
     </AppBar>
   );

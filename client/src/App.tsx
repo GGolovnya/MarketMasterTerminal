@@ -7,7 +7,10 @@ import { useAuth } from './contexts/AuthContext';
 import Terminal from './pages/TerminalPage';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) {
+    return null; // или показать спиннер загрузки
+  }
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 

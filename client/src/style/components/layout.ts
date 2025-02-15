@@ -34,7 +34,7 @@ export const layoutStyles = {
   // Навигация
   navigation: {
     backgroundColor: 'rgba(18, 18, 18, 0.95)',
-    padding: '16px 24px',
+    padding: '10px 24px',
     borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
   },
 

@@ -4,6 +4,7 @@ import axiosInstance, { setAccessToken } from '../utils/axiosInstance';
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isLoading: boolean; // добавляем это свойство
   user: any;
   login: (email: string, password: string) => Promise<void>;
   signup: (username: string, email: string, password: string) => Promise<void>;
@@ -14,10 +15,12 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // добавляем состояние
   const [user, setUser] = useState(null);
 
   useEffect(() => {
     const checkAuth = async () => {
+      setIsLoading(true);
       try {
         const response = await axiosInstance.get('/api/token/refresh');
         setUser(response.data.user);
@@ -26,6 +29,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         setIsAuthenticated(false);
         setUser(null);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -66,7 +71,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, signup, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, user, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,22 +1,22 @@
 // Стили для кнопок
 export const buttonStyles = {
-  // Основная кнопка
+  // Основная кнопка (примерняется: меню хедер)
   primary: {
-    background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+    background: 'linear-gradient(45deg, rgba(33, 149, 243, 0.7) 30%, rgba(33, 203, 243, 0.9) 90%)',
     '&:hover': {
-      background: 'linear-gradient(45deg, #1976D2 30%, #1AC6E9 90%)',
+      background: 'linear-gradient(45deg, rgba(25, 118, 210, 0.7) 30%, rgba(26, 198, 233, 0.9) 90%)',
     },
     padding: '12px 24px',
     borderRadius: '8px',
-    color: '#ffffff',
+    color: 'rgba(255, 255, 255, 1)',
     fontWeight: 600,
     textTransform: 'none',
   },
 
-  // Вторичная кнопка
+  // Вторичная кнопка (примерняется: меню хедер)
   secondary: {
-    border: '1px solid #90caf9',
-    color: '#90caf9',
+    border: '1px solid rgba(144, 202, 249, 1)',
+    color: 'rgba(144, 202, 249, 1)',
     '&:hover': {
       backgroundColor: 'rgba(144, 202, 249, 0.08)',
     },
@@ -27,20 +27,20 @@ export const buttonStyles = {
 
   // Кнопка покупки
   buy: {
-    backgroundColor: '#4caf50',
+    backgroundColor: 'rgba(76, 175, 80, 1)',
     '&:hover': {
-      backgroundColor: '#388e3c',
+      backgroundColor: 'rgb(43, 117, 46)',
     },
-    color: '#ffffff',
+    color: 'rgba(255, 255, 255, 1)',
   },
 
   // Кнопка продажи
   sell: {
-    backgroundColor: '#f44336',
+    backgroundColor: 'rgba(244, 67, 54, 1)',
     '&:hover': {
-      backgroundColor: '#d32f2f',
+      backgroundColor: 'rgb(163, 35, 35)',
     },
-    color: '#ffffff',
+    color: 'rgba(255, 255, 255, 1)',
   },
 
   // Иконка кнопки

@@ -10,7 +10,6 @@ import {
   CircularProgress,
   InputAdornment,
   IconButton,
-  Snackbar,
   Stack,
   Divider,
   Link,
@@ -194,11 +193,6 @@ function Login() {
           </form>
         </Paper>
       </Box>
-      <Snackbar
-        open={!!successMessage}
-        autoHideDuration={2000}
-        message={successMessage}
-      />
     </Container>
   );
 }

@@ -15,10 +15,10 @@ export const formStyles = {
         borderColor: 'rgba(255, 255, 255, 0.23)',
       },
       '&:hover fieldset': {
-        borderColor: '#90caf9',
+        borderColor: 'rgba(144, 202, 249, 1)',
       },
       '&.Mui-focused fieldset': {
-        borderColor: '#90caf9',
+        borderColor: 'rgba(144, 202, 249, 1)',
       },
     },
     '& .MuiInputLabel-root': {
@@ -32,13 +32,13 @@ export const formStyles = {
   // Чекбокс
   checkbox: {
     '& .MuiCheckbox-root': {
-      color: '#90caf9',
+      color: 'rgba(144, 202, 249, 1)',
     },
   },
 
   // Сообщение об ошибке
   errorMessage: {
-    color: '#f44336',
+    color: 'rgba(244, 67, 54, 1)',
     fontSize: '0.75rem',
     marginTop: '4px',
   },
