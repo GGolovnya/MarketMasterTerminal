@@ -5,7 +5,7 @@ import OrderForm from '../components/OrderForm';
 import OpenOrders from '../components/OpenOrders';
 import { styles } from '../style/components.styles';
 
-function Dashboard() {
+function Terminal() {
   return (
     <Container maxWidth="xl">
       <Typography variant="h4" component="h1" sx={{ mb: 3 }}>
@@ -37,4 +37,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard;
+export default Terminal;

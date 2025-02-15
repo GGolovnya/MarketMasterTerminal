@@ -4,6 +4,7 @@ import { Navigation } from './components/Navigation';
 import  Login  from './pages/LoginPage';
 import  Register from './pages/RegisterPage';
 import { useAuth } from './contexts/AuthContext';
+import Terminal from './pages/TerminalPage';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
@@ -24,7 +25,7 @@ export const App = () => {
         } />
         <Route path="/terminal" element={
           <PrivateRoute>
-            <div>Торговый терминал</div>
+            <Terminal/>
           </PrivateRoute>
         } />
         <Route path="/" element={<div>Главная страница</div>} />

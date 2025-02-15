@@ -21,9 +21,6 @@ export const Navigation = () => {
           </Button>
           {isAuthenticated && (
             <>
-              <Button color="inherit" component={Link} to="/profile">
-                Личный кабинет
-              </Button>
               <Button color="inherit" component={Link} to="/terminal">
                 Торговый терминал
               </Button>
@@ -31,9 +28,14 @@ export const Navigation = () => {
           )}
         </Box>
         {isAuthenticated ? (
-          <Button color="inherit" onClick={handleLogout}>
+          <>
+            <Button color="inherit" component={Link} to="/profile">
+                Личный кабинет
+            </Button>
+            <Button color="inherit" onClick={handleLogout}>
             Выйти
-          </Button>
+            </Button>
+          </>
         ) : (
           <>
             <Button color="inherit" component={Link} to="/login">

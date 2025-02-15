@@ -26,6 +26,9 @@ router.post("/signup", async (req, res) => {
 
     const { accessToken, refreshToken } = generateToken({ user: plainUser });
 
+    // Сохраняем refresh token в БД
+    await user.update({ refreshToken });
+
     res
       .cookie("refreshToken", refreshToken, cookieConfig.refresh)
       .json({ user: plainUser, accessToken });
@@ -60,6 +63,9 @@ router.post("/signin", async (req, res) => {
 
     const { accessToken, refreshToken } = generateToken({ user: plainUser });
 
+    // Сохраняем refresh token в БД
+    await user.update({ refreshToken });
+
     res
       .cookie("refreshToken", refreshToken, cookieConfig.refresh)
       .json({ user: plainUser, accessToken });
@@ -69,8 +75,18 @@ router.post("/signin", async (req, res) => {
   }
 });
 
-router.get("/logout", (req, res) => {
+router.get("/logout", async (req, res) => {
   try {
+    const refreshToken = req.cookies.refreshToken;
+    
+    if (refreshToken) {
+      // Находим пользователя по refresh token и очищаем его
+      const user = await User.findOne({ where: { refreshToken } });
+      if (user) {
+        await user.update({ refreshToken: null });
+      }
+    }
+
     res.clearCookie("refreshToken").sendStatus(200);
   } catch (error) {
     console.error("Ошибка выхода:", error);
