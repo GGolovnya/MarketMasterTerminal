@@ -1,4 +1,3 @@
-// src/app.js
 require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
@@ -28,7 +27,6 @@ app.use(express.json());
 app.use('/api', apiRouter);
 app.use(errorHandler);
 
-// Инициализация WebSocket сервера
 const wss = setupWebSocketServer(server);
 
 server.listen(PORT, () => {

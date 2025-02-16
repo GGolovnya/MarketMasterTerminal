@@ -1,21 +1,23 @@
+// Импорты необходимых библиотек и компонентов
 import { useState, useEffect } from 'react';
 import { w3cwebsocket as WebSocket } from 'websocket';
-import { Box, Typography, Paper, CircularProgress } from '@mui/material';
+import { Box, Typography, Paper, CircularProgress, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { layoutStyles } from '../style/components/layout';
-import { theme } from '../style/theme';
 import { ErrorBoundary } from 'react-error-boundary';
 
+// URL для WebSocket соединения и интервал пинга
 const WEBSOCKET_URL = 'ws://localhost:3000/ws/balance';
-const FALLBACK_INTERVAL = 20000;
-const MIN_BALANCE_USD = 1;
+const PING_INTERVAL = 30000; // интервал пинга 30 секунд
 
+// Стилизованный контейнер для отображения баланса
 const BalanceContainer = styled(Paper)(({ theme }) => ({
   ...layoutStyles.card,
   padding: theme.spacing(3),
   marginBottom: theme.spacing(2),
 }));
 
+// Стилизованный элемент для отображения информации о монете
 const BalanceItem = styled(Box)(({ theme }) => ({
   display: 'flex',
   justifyContent: 'space-between',
@@ -30,118 +32,134 @@ const BalanceItem = styled(Box)(({ theme }) => ({
   },
 }));
 
+// Интерфейс для типа баланса монеты
 interface CoinBalance {
   symbol: string;
   amount: number;
   usdValue: number;
 }
 
-const ErrorFallback = ({ error, resetErrorBoundary }) => (
-  <Box role="alert">
-    <Typography color="error">Что-то пошло не так:</Typography>
-    <Typography>{error.message}</Typography>
-    <button onClick={resetErrorBoundary}>Попробовать снова</button>
+// Интерфейс ошибки
+interface ErrorFallbackProps {
+  error: Error;
+  resetErrorBoundary: () => void;
+}
+
+// Компонент для отображения ошибок
+const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary }) => (
+  <Box role="alert" sx={{ p: 2 }}>
+    <Typography color="error" variant="h6" gutterBottom>
+      Что-то пошло не так:
+    </Typography>
+    <Typography gutterBottom>
+      {error.message}
+    </Typography>
+    <Button
+      variant="contained"
+      color="primary"
+      onClick={resetErrorBoundary}
+    >
+      Попробовать снова
+    </Button>
   </Box>
 );
 
+// Основной компонент Balance
 const Balance = () => {
-  const [balances, setBalances] = useState<CoinBalance[]>([]);
-  const [totalBalance, setTotalBalance] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isUpdating, setIsUpdating] = useState<boolean>(false);
-  const [wsConnected, setWsConnected] = useState<boolean>(false);
+  // Состояния компонента
+  const [balances, setBalances] = useState<CoinBalance[]>([]); // массив балансов
+  const [totalBalance, setTotalBalance] = useState<number>(0); // общий баланс
+  const [loading, setLoading] = useState<boolean>(true); // состояние загрузки
+  const [error, setError] = useState<string | null>(null); // состояние ошибки
+  const [wsConnected, setWsConnected] = useState<boolean>(false); // состояние подключения
 
   useEffect(() => {
     let ws: WebSocket | null = null;
-    let fallbackInterval: NodeJS.Timeout;
-    let reconnectTimeout: NodeJS.Timeout;
+    let pingInterval: NodeJS.Timeout;
 
+    // Функция для установки WebSocket соединения
     const connectWebSocket = () => {
       if (ws?.readyState === WebSocket.OPEN) return;
 
       ws = new WebSocket(WEBSOCKET_URL);
 
+      // Обработчик открытия соединения
       ws.onopen = () => {
         setLoading(false);
         setWsConnected(true);
         setError(null);
+
+        // Запуск интервала пинга
+        pingInterval = setInterval(() => {
+          if (ws?.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, PING_INTERVAL);
       };
 
+      // Обработчик получения сообщений
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data.toString());
-          if (data.balances && Array.isArray(data.balances)) {
+
+          // Обработка разных типов сообщений
+          if (data.type === 'pong') {
+            return; // Игнорируем ответы пинга
+          }
+
+          if (data.type === 'balance' && data.balances && Array.isArray(data.balances)) {
             setBalances(data.balances);
             setTotalBalance(data.totalBalance || 0);
           }
-          setIsUpdating(false);
         } catch (err) {
           console.error('Ошибка обработки данных WebSocket:', err);
           setError('Ошибка обработки данных');
         }
       };
 
+      // Обработчик ошибок
       ws.onerror = () => {
         setWsConnected(false);
         setError('Ошибка соединения с сервером');
-        initializeFallback();
       };
 
+      // Обработчик закрытия соединения
       ws.onclose = () => {
         setWsConnected(false);
+        clearInterval(pingInterval);
         // Попытка переподключения через 3 секунды
-        reconnectTimeout = setTimeout(connectWebSocket, 3000);
+        setTimeout(connectWebSocket, 3000);
       };
     };
 
-    const initializeFallback = async () => {
-      const fetchBalance = async () => {
-        setIsUpdating(true);
-        try {
-          const response = await fetch('/api/balance');
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-          if (data.balances && Array.isArray(data.balances)) {
-            setBalances(data.balances);
-            setTotalBalance(data.totalBalance || 0);
-          }
-          setError(null);
-        } catch (err) {
-          setError('Не удалось получить актуальный баланс');
-          console.error('Ошибка получения баланса:', err);
-        } finally {
-          setIsUpdating(false);
-        }
-      };
-
-      await fetchBalance();
-      fallbackInterval = setInterval(fetchBalance, FALLBACK_INTERVAL);
-    };
-
+    // Инициализация соединения
     connectWebSocket();
 
+    // Очистка при размонтировании компонента
     return () => {
       if (ws) {
         ws.close();
       }
-      if (fallbackInterval) {
-        clearInterval(fallbackInterval);
-      }
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
+      if (pingInterval) {
+        clearInterval(pingInterval);
       }
     };
   }, []);
 
+  // Отрисовка компонента
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
+    <ErrorBoundary
+      FallbackComponent={ErrorFallback}
+      onReset={() => {
+        setError(null);
+        setLoading(true);
+        setWsConnected(false);
+      }}
+    >
       <BalanceContainer>
+        {/* Отображение общего баланса */}
         <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
           Общий баланс: ${(totalBalance || 0).toFixed(2)}
-          {isUpdating && <CircularProgress size={20} />}
           {wsConnected && (
             <Typography variant="caption" color="success.main">
               (Live)
@@ -149,6 +167,7 @@ const Balance = () => {
           )}
         </Typography>
 
+        {/* Условный рендеринг в зависимости от состояния */}
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
             <CircularProgress />
@@ -159,6 +178,7 @@ const Balance = () => {
           </Typography>
         ) : (
           <Box>
+            {/* Отображение списка монет */}
             {balances.map((coin) => (
               <BalanceItem key={coin.symbol}>
                 <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
