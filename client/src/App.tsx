@@ -5,6 +5,7 @@ import  Login  from './pages/LoginPage';
 import  Register from './pages/RegisterPage';
 import { useAuth } from './contexts/AuthContext';
 import Terminal from './pages/TerminalPage';
+import PersonalAccount from './pages/PersonalAccount';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -23,7 +24,7 @@ export const App = () => {
         <Route path="/signup" element={<Register />} />
         <Route path="/profile" element={
           <PrivateRoute>
-            <div>Личный кабинет</div>
+            <PersonalAccount/>
           </PrivateRoute>
         } />
         <Route path="/terminal" element={

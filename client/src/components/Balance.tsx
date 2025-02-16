@@ -39,6 +39,17 @@ interface CoinBalance {
   usdValue: number;
 }
 
+// Функция для преобразования строки в число с проверкой
+const safeParseFloat = (value: string | number): number => {
+  const parsed = typeof value === 'string' ? parseFloat(value) : value;
+  return isNaN(parsed) ? 0 : parsed;
+};
+
+// Функция для форматирования числа с указанной точностью
+const formatNumber = (value: number, decimals: number = 2): string => {
+  return value.toFixed(decimals);
+};
+
 // Интерфейс ошибки
 interface ErrorFallbackProps {
   error: Error;
@@ -108,8 +119,20 @@ const Balance = () => {
           }
 
           if (data.type === 'balance' && data.balances && Array.isArray(data.balances)) {
-            setBalances(data.balances);
-            setTotalBalance(data.totalBalance || 0);
+            // Преобразование и валидация данных
+            const processedBalances = data.balances.map(balance => ({
+              symbol: balance.symbol,
+              amount: safeParseFloat(balance.amount),
+              usdValue: safeParseFloat(balance.usdValue),
+            }));
+
+            const totalValue = processedBalances.reduce(
+              (sum, balance) => sum + balance.usdValue,
+              0,
+            );
+
+            setBalances(processedBalances);
+            setTotalBalance(totalValue);
           }
         } catch (err) {
           console.error('Ошибка обработки данных WebSocket:', err);
@@ -159,7 +182,7 @@ const Balance = () => {
       <BalanceContainer>
         {/* Отображение общего баланса */}
         <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-          Общий баланс: ${(totalBalance || 0).toFixed(2)}
+          Общий баланс: ${formatNumber(totalBalance)}
           {wsConnected && (
             <Typography variant="caption" color="success.main">
               (Live)
@@ -186,10 +209,10 @@ const Balance = () => {
                 </Typography>
                 <Box sx={{ textAlign: 'right' }}>
                   <Typography variant="body2" color="text.secondary">
-                    {(coin.amount || 0).toFixed(8)}
+                    {formatNumber(coin.amount, 8)}
                   </Typography>
                   <Typography variant="body2" color="primary">
-                    ${(coin.usdValue || 0).toFixed(2)}
+                    ${formatNumber(coin.usdValue)}
                   </Typography>
                 </Box>
               </BalanceItem>

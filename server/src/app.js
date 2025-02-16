@@ -7,6 +7,7 @@ const http = require('http');
 const setupWebSocketServer = require('./websocket/server');
 const apiRouter = require('./routers/api.router');
 const errorHandler = require('./middlewares/errorHandler');
+const logger = require('./configs/logger');
 
 const app = express();
 const server = http.createServer(app);
@@ -27,9 +28,31 @@ app.use(express.json());
 app.use('/api', apiRouter);
 app.use(errorHandler);
 
-const wss = setupWebSocketServer(server);
+async function startServer() {
+  try {
+    // Запускаем сервер без блокирующей проверки
+    server.listen(PORT, () => {
+      logger.info(`HTTP сервер запущен на порту ${PORT}`);
+      logger.info(`WebSocket сервер запущен на ws://localhost:${PORT}/ws/balance`);
+    });
 
-server.listen(PORT, () => {
-  console.log(`HTTP сервер запущен на порту ${PORT}`);
-  console.log(`WebSocket сервер запущен на ws://localhost:${PORT}/ws/balance`);
-});
+    // Инициализируем WebSocket сервер
+    const wss = await setupWebSocketServer(server);
+
+    // Обработка закрытия приложения
+    process.on('SIGTERM', () => {
+      logger.info('Получен сигнал SIGTERM, закрываем сервер...');
+      server.close(() => {
+        logger.info('Сервер успешно закрыт');
+        process.exit(0);
+      });
+    });
+
+  } catch (error) {
+    logger.error('Ошибка при запуске сервера:', error);
+    process.exit(1);
+  }
+}
+
+// Запускаем сервер
+startServer();
