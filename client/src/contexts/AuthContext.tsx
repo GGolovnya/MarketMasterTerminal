@@ -4,7 +4,7 @@ import axiosInstance, { setAccessToken } from '../utils/axiosInstance';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  isLoading: boolean; // добавляем это свойство
+  isLoading: boolean;
   user: any;
   login: (email: string, password: string) => Promise<void>;
   signup: (username: string, email: string, password: string) => Promise<void>;
@@ -15,7 +15,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // добавляем состояние
+  const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
 
   useEffect(() => {

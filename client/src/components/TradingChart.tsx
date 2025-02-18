@@ -24,7 +24,7 @@ function TradingChart() {
         enable_publishing: false,
         allow_symbol_change: true,
         save_image: false,
-        height: '550px',
+        height: '100%',
         width: '100%',
       });
     }
@@ -40,7 +40,7 @@ function TradingChart() {
         justifyContent: 'center',
         alignItems: 'center',
         width: '100%',
-        height: '100%',
+        height: '100vh',
       }}
     />
   );

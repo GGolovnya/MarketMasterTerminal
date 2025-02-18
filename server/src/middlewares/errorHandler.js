@@ -1,74 +1,83 @@
 const errorHandler = (err, req, res, next) => {
-    console.error('Error:', err);
-    
-    // Преобразование SequelizeValidationError в ValidationError
-    if (err.name === 'SequelizeValidationError') {
-      err.name = 'ValidationError';
-    }
+  console.error('Error:', err);
   
-    // Обработка ошибок "не найдено"
-    if (err.name === 'NotFoundError') {
-      return res.status(404).json({
-        status: 'error',
-        type: 'not_found',
-        message: 'Запрашиваемый ресурс не найден в базе данных'
-      });
-    }
-    
-    // Обработка ошибок валидации
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({
-        status: 'error',
-        type: 'validation',
-        message: 'Данные не соответствуют заданным правилам или ограничениям в базе данных',
-        details: err.errors || err.message
-      });
-    }
-  
-    // Обработка ошибок аутентификации
-    if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        status: 'error',
-        type: 'auth',
-        message: 'Срок действия токена истек'
-      });
-    }
-  
-    if (err.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        status: 'error',
-        type: 'auth',
-        message: 'Недействительный токен'
-      });
-    }
-  
-    // Обработка ошибок уникальности (SequelizeUniqueConstraintError)
-    if (err.name === 'SequelizeUniqueConstraintError') {
-      return res.status(409).json({
-        status: 'error',
-        type: 'unique_constraint',
-        message: 'Запись с такими данными уже существует',
-        details: err.errors?.map(e => e.message)
-      });
-    }
-  
-    // Обработка ошибок внешнего ключа (SequelizeForeignKeyConstraintError)
-    if (err.name === 'SequelizeForeignKeyConstraintError') {
-      return res.status(409).json({
-        status: 'error',
-        type: 'foreign_key',
-        message: 'Невозможно выполнить операцию из-за связанных данных',
-        details: err.message
-      });
-    }
-  
-    // Обработка серверных ошибок
-    res.status(500).json({
-      status: 'error',
+  const errorResponses = {
+    ValidationError: {
+      status: 400,
+      type: 'validation',
+      message: 'Данные не соответствуют заданным правилам или ограничениям в базе данных'
+    },
+    NotFoundError: {
+      status: 404,
+      type: 'not_found',
+      message: 'Запрашиваемый ресурс не найден в базе данных'
+    },
+    TokenExpiredError: {
+      status: 401,
+      type: 'auth',
+      message: 'Срок действия токена истек'
+    },
+    JsonWebTokenError: {
+      status: 401,
+      type: 'auth',
+      message: 'Недействительный токен'
+    },
+    AuthHeaderError: {
+      status: 401,
+      type: 'auth',
+      message: 'Неверный заголовок авторизации'
+    },
+    MissingTokenError: {
+      status: 401,
+      type: 'auth', 
+      message: 'Отсутствует токен'
+    },
+    AdminAccessError: {
+      status: 403,
+      type: 'auth',
+      message: 'Требуются права администратора'
+    },
+    SequelizeUniqueConstraintError: {
+      status: 409,
+      type: 'unique_constraint',
+      message: 'Запись с такими данными уже существует'
+    },
+    SequelizeForeignKeyConstraintError: {
+      status: 409,
+      type: 'foreign_key',
+      message: 'Невозможно выполнить операцию из-за связанных данных'
+    },
+    ServerError: {
+      status: 500,
       type: 'server',
-      message: 'Внутренняя ошибка сервера',
-      details: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+      message: 'Внутренняя ошибка сервера'
+    }
+  };
+
+  // Преобразование SequelizeValidationError в ValidationError
+  if (err.name === 'SequelizeValidationError') {
+    err.name = 'ValidationError';
   }
-  
-  module.exports = errorHandler;
+
+  const errorType = errorResponses[err.name] || errorResponses.ServerError;
+  const response = {
+    status: 'error',
+    type: errorType.type,
+    message: errorType.message
+  };
+
+  // Добавляем детали только для определенных типов ошибок
+  if (err.name === 'ValidationError') {
+    response.details = err.errors || err.message;
+  } else if (err.name === 'SequelizeUniqueConstraintError') {
+    response.details = err.errors?.map(e => e.message);
+  } else if (err.name === 'SequelizeForeignKeyConstraintError') {
+    response.details = err.message;
+  } else if (err.name === 'ServerError' && process.env.NODE_ENV === 'development') {
+    response.details = err.message;
+  }
+
+  res.status(errorType.status).json(response);
+}
+
+module.exports = errorHandler;

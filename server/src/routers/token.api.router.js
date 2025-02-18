@@ -4,13 +4,15 @@ const generateToken = require("../utils/generateToken");
 const cookieConfig = require("../configs/cookieConfig");
 const { User } = require("../../db/models");
 
-router.get("/refresh", verifyRefreshToken, async (req, res) => {
+router.get("/refresh", verifyRefreshToken, async (req, res, next) => {
   try {
     const userId = req.user.id;
     const user = await User.findByPk(userId);
 
     if (!user) {
-      return res.status(404).json({ message: "Пользователь не найден" });
+      const error = new Error("Пользователь не найден");
+      error.name = "NotFoundError";
+      return next(error);
     }
 
     const plainUser = user.get();
@@ -22,8 +24,7 @@ router.get("/refresh", verifyRefreshToken, async (req, res) => {
       .cookie("refreshToken", refreshToken, cookieConfig.refresh)
       .json({ user: plainUser, accessToken });
   } catch (error) {
-    console.error("Ошибка при обновлении токенов:", error);
-    res.status(500).json({ message: "Ошибка сервера" });
+    next(error);
   }
 });
 

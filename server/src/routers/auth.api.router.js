@@ -4,11 +4,13 @@ const bcrypt = require("bcrypt");
 const generateToken = require("../utils/generateToken");
 const cookieConfig = require("../configs/cookieConfig");
 
-router.post("/signup", async (req, res) => {
+router.post("/signup", async (req, res, next) => {
   const { username, email, password } = req.body;
 
   if (!(username && email && password)) {
-    return res.status(400).json({ message: "Необходимо заполнить все поля" });
+    const error = new Error("Необходимо заполнить все поля");
+    error.name = "ValidationError";
+    return next(error);
   }
 
   try {
@@ -18,69 +20,70 @@ router.post("/signup", async (req, res) => {
     });
 
     if (!isCreated) {
-      return res.status(400).json({ message: "Такой пользователь существует" });
+      const error = new Error("Такой пользователь существует");
+      error.name = "ValidationError";
+      return next(error);
     }
 
     const plainUser = user.get();
     delete plainUser.password;
 
     const { accessToken, refreshToken } = generateToken({ user: plainUser });
-
-    // Сохраняем refresh token в БД
     await user.update({ refreshToken });
 
     res
       .cookie("refreshToken", refreshToken, cookieConfig.refresh)
       .json({ user: plainUser, accessToken });
   } catch (error) {
-    console.error("Ошибка регистрации:", error);
-    res.status(500).json({ message: "Ошибка сервера" });
+    next(error);
   }
 });
 
-router.post("/signin", async (req, res) => {
+router.post("/signin", async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!(email && password)) {
-    return res.status(400).json({ message: "Необходимо заполнить все поля" });
+    const error = new Error("Необходимо заполнить все поля");
+    error.name = "ValidationError";
+    return next(error);
   }
 
   try {
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
-      return res.status(404).json({ message: "Пользователь не найден" });
+      const error = new Error("Пользователь не найден");
+      error.name = "NotFoundError";
+      return next(error);
     }
 
     const isCorrectPassword = await bcrypt.compare(password, user.password);
 
     if (!isCorrectPassword) {
-      return res.status(400).json({ message: "Некорректный email или пароль" });
+      const error = new Error("Некорректный email или пароль");
+      error.name = "ValidationError";
+      return next(error);
     }
 
     const plainUser = user.get();
     delete plainUser.password;
 
     const { accessToken, refreshToken } = generateToken({ user: plainUser });
-
-    // Сохраняем refresh token в БД
     await user.update({ refreshToken });
 
     res
       .cookie("refreshToken", refreshToken, cookieConfig.refresh)
       .json({ user: plainUser, accessToken });
   } catch (error) {
-    console.error("Ошибка авторизации:", error);
-    res.status(500).json({ message: "Ошибка сервера" });
+    next(error);
   }
 });
 
-router.get("/logout", async (req, res) => {
+router.get("/logout", async (req, res, next) => {
   try {
     const refreshToken = req.cookies.refreshToken;
     
     if (refreshToken) {
-      // Находим пользователя по refresh token и очищаем его
       const user = await User.findOne({ where: { refreshToken } });
       if (user) {
         await user.update({ refreshToken: null });
@@ -89,8 +92,7 @@ router.get("/logout", async (req, res) => {
 
     res.clearCookie("refreshToken").sendStatus(200);
   } catch (error) {
-    console.error("Ошибка выхода:", error);
-    res.status(500).sendStatus(400);
+    next(error);
   }
 });
 

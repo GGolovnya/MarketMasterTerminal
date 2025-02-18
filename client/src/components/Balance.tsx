@@ -1,14 +1,8 @@
-// Импорты необходимых библиотек и компонентов
 import { useState, useEffect } from 'react';
-import { w3cwebsocket as WebSocket } from 'websocket';
 import { Box, Typography, Paper, CircularProgress, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { layoutStyles } from '../style/components/layout';
 import { ErrorBoundary } from 'react-error-boundary';
-
-// URL для WebSocket соединения и интервал пинга
-const WEBSOCKET_URL = 'ws://localhost:3000/ws/balance';
-const PING_INTERVAL = 30000; // интервал пинга 30 секунд
 
 // Стилизованный контейнер для отображения баланса
 const BalanceContainer = styled(Paper)(({ theme }) => ({
@@ -82,91 +76,41 @@ const Balance = () => {
   const [totalBalance, setTotalBalance] = useState<number>(0); // общий баланс
   const [loading, setLoading] = useState<boolean>(true); // состояние загрузки
   const [error, setError] = useState<string | null>(null); // состояние ошибки
-  const [wsConnected, setWsConnected] = useState<boolean>(false); // состояние подключения
 
+  // Функция для получения баланса
+  const fetchBalance = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/balance');
+      const data = await response.json();
+
+      if (data.balances && Array.isArray(data.balances)) {
+        const processedBalances = data.balances.map(balance => ({
+          symbol: balance.symbol,
+          amount: safeParseFloat(balance.amount),
+          usdValue: safeParseFloat(balance.usdValue),
+        }));
+
+        const totalValue = processedBalances.reduce(
+          (sum, balance) => sum + balance.usdValue,
+          0,
+        );
+
+        setBalances(processedBalances);
+        setTotalBalance(totalValue);
+      }
+    } catch (err) {
+      console.error('Ошибка получения баланса:', err);
+      setError('Ошибка получения данных');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Получение баланса при первом рендере
   useEffect(() => {
-    let ws: WebSocket | null = null;
-    let pingInterval: NodeJS.Timeout;
-
-    // Функция для установки WebSocket соединения
-    const connectWebSocket = () => {
-      if (ws?.readyState === WebSocket.OPEN) return;
-
-      ws = new WebSocket(WEBSOCKET_URL);
-
-      // Обработчик открытия соединения
-      ws.onopen = () => {
-        setLoading(false);
-        setWsConnected(true);
-        setError(null);
-
-        // Запуск интервала пинга
-        pingInterval = setInterval(() => {
-          if (ws?.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'ping' }));
-          }
-        }, PING_INTERVAL);
-      };
-
-      // Обработчик получения сообщений
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data.toString());
-
-          // Обработка разных типов сообщений
-          if (data.type === 'pong') {
-            return; // Игнорируем ответы пинга
-          }
-
-          if (data.type === 'balance' && data.balances && Array.isArray(data.balances)) {
-            // Преобразование и валидация данных
-            const processedBalances = data.balances.map(balance => ({
-              symbol: balance.symbol,
-              amount: safeParseFloat(balance.amount),
-              usdValue: safeParseFloat(balance.usdValue),
-            }));
-
-            const totalValue = processedBalances.reduce(
-              (sum, balance) => sum + balance.usdValue,
-              0,
-            );
-
-            setBalances(processedBalances);
-            setTotalBalance(totalValue);
-          }
-        } catch (err) {
-          console.error('Ошибка обработки данных WebSocket:', err);
-          setError('Ошибка обработки данных');
-        }
-      };
-
-      // Обработчик ошибок
-      ws.onerror = () => {
-        setWsConnected(false);
-        setError('Ошибка соединения с сервером');
-      };
-
-      // Обработчик закрытия соединения
-      ws.onclose = () => {
-        setWsConnected(false);
-        clearInterval(pingInterval);
-        // Попытка переподключения через 3 секунды
-        setTimeout(connectWebSocket, 3000);
-      };
-    };
-
-    // Инициализация соединения
-    connectWebSocket();
-
-    // Очистка при размонтировании компонента
-    return () => {
-      if (ws) {
-        ws.close();
-      }
-      if (pingInterval) {
-        clearInterval(pingInterval);
-      }
-    };
+    fetchBalance();
   }, []);
 
   // Отрисовка компонента
@@ -176,19 +120,23 @@ const Balance = () => {
       onReset={() => {
         setError(null);
         setLoading(true);
-        setWsConnected(false);
+        fetchBalance();
       }}
     >
       <BalanceContainer>
-        {/* Отображение общего баланса */}
-        <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-          Общий баланс: ${formatNumber(totalBalance)}
-          {wsConnected && (
-            <Typography variant="caption" color="success.main">
-              (Live)
-            </Typography>
-          )}
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            Общий баланс: ${formatNumber(totalBalance)}
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={fetchBalance}
+            disabled={loading}
+          >
+            Обновить
+          </Button>
+        </Box>
 
         {/* Условный рендеринг в зависимости от состояния */}
         {loading ? (

@@ -1,5 +1,4 @@
 const BINANCE_WS_URL = 'wss://stream.binance.com:9443/ws';
-const BINANCE_REST_URL = 'https://api.binance.com/api/v3';
 
 export interface TickerData {
   symbol: string;
