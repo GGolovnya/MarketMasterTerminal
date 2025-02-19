@@ -1,4 +1,4 @@
-const winston = require('winston'); // Импортируем библиотеку winston для логирования
+const winston = require('winston');
 
 // Создаем конфигурацию логгера
 const logger = winston.createLogger({
@@ -7,20 +7,10 @@ const logger = winston.createLogger({
     winston.format.timestamp(), // Добавляем временную метку
     winston.format.json() // Форматируем логи в JSON
   ),
-  transports: [ // Настраиваем куда будут записываться логи
+  transports: [
     new winston.transports.File({ filename: 'error.log', level: 'error' }), // Файл для ошибок
     new winston.transports.File({ filename: 'combined.log' }) // Файл для всех логов
   ]
 });
 
-// Добавляем вывод в консоль для разработки
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(), // Добавляем цвета в консоль
-      winston.format.simple() // Используем простой формат для консоли
-    )
-  }));
-}
-
-module.exports = logger; // Экспортируем настроенный логгер
+module.exports = logger;

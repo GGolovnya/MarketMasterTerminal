@@ -1,5 +1,12 @@
+const logger = require('../configs/logger');
+
 const errorHandler = (err, req, res, next) => {
   console.error('Error:', err);
+  logger.error('Error:', { 
+    error: err.message,
+    stack: err.stack,
+    name: err.name
+  });
   
   const errorResponses = {
     ValidationError: {

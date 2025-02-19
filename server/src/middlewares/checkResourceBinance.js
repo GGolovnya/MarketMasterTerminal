@@ -9,6 +9,7 @@ const logger = require('../configs/logger');
  * Проверяет доступность Binance API и возвращает ресурсы или пустой массив
  * @returns {Promise<Object>} Объект с ресурсами или пустой массив
  */
+
 async function checkBinanceResources() {
   try {
     const connectionStatus = await checkBinanceConnection();

@@ -4,8 +4,8 @@ const morgan = require('morgan');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const http = require('http');
-// const setupWebSocketServer = require('./websocket/server'); // Будет использоваться для WebSocket Binance
-// const setupBybitWebSocketServer = require('./websocket/serverByBit'); // Будет использоваться для WebSocket Bybit
+// const setupWebSocketServer = require('./websocket/serverBinance');
+// const setupBybitWebSocketServer = require('./websocket/serverByBit');
 const apiRouter = require('./routers/api.router');
 const errorHandler = require('./middlewares/errorHandler');
 const logger = require('./configs/logger');
@@ -33,14 +33,12 @@ function startServer() {
   try {
     server.listen(PORT, () => {
       logger.info(`HTTP сервер запущен на порту ${PORT}`);
-      /* 
-        TODO: Реализовать WebSocket функционал:
-        1. Добавить WebSocket сервер для Binance
-        2. Добавить WebSocket сервер для Bybit
-        3. Настроить обработку соединений
-        4. Добавить обработку ошибок
-        5. Настроить переподключение при разрыве соединения
-      */
+      
+      // // Инициализация WebSocket серверов
+      // setupWebSocketServer(server);
+      // setupBybitWebSocketServer(server);
+      
+      // logger.info('WebSocket серверы инициализированы');
     });
 
     // Обработка закрытия приложения

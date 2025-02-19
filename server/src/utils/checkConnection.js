@@ -12,6 +12,7 @@ const logger = require('../configs/logger');
  * @param {string} baseUrl - Базовый URL API
  * @returns {Promise<Object>} Объект с информацией о статусе соединения
  */
+
 async function checkApiConnection(apiType, baseUrl) {
   const endpoints = {
     binance: '/api/v3/ping',
@@ -69,6 +70,5 @@ const checkBybitConnection = () => checkApiConnection('bybit', 'https://api.bybi
 
 module.exports = {
   checkBinanceConnection,
-  checkBybitConnection,
-  checkApiConnection
+  checkBybitConnection
 };
