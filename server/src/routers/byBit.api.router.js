@@ -15,13 +15,6 @@ const generateSignature = (params = {}) => {
     timestamp: timestamp.toString()
   };
 
-  const orderedParams = Object.keys(allParams)
-    .sort()
-    .reduce((obj, key) => {
-      obj[key] = allParams[key];
-      return obj;
-    }, {});
-
   const queryString = Object.keys(allParams)
     .sort()
     .map(key => `${key}=${allParams[key]}`)
@@ -38,9 +31,9 @@ const generateSignature = (params = {}) => {
 const makeBybitRequest = async (endpoint, params = {}) => {
   const { signature, timestamp, queryString } = generateSignature(params);
   
-  logger.info('Параметры для подписи:', params);
-  logger.info('Сгенерированная строка запроса:', { queryString });
-  logger.info('Сгенерированная подпись:', { signature });
+  console.log('Параметры для подписи:', params);
+  console.log('Сгенерированная строка запроса:', queryString);
+  console.log('Сгенерированная подпись:', signature);
 
   const headers = {
     'X-BAPI-API-KEY': API_KEY,
@@ -48,7 +41,7 @@ const makeBybitRequest = async (endpoint, params = {}) => {
     'X-BAPI-TIMESTAMP': timestamp.toString()
   };
 
-  logger.info(`Отправка запроса к ${endpoint}`, { headers, params });
+  console.log(`Отправка запроса к ${endpoint}`, { headers, params });
 
   const response = await fetch(`${BASE_URL}${endpoint}?${queryString}`, {
     method: 'GET',
@@ -82,18 +75,17 @@ router.get('/balance', async (req, res, next) => {
 
     const resourceStatus = await checkBybitResources();
     if (!resourceStatus.status) {
-      logger.error('Ошибка доступа к Bybit API');
+      console.error('Ошибка доступа к Bybit API');
       return res.status(503).json({
         status: 'error',
         message: resourceStatus.message
       });
     }
 
-    const data = await makeBybitRequest('/v5/account/wallet-balance');
-    logger.info('Успешно получен баланс Bybit');
+    const data = await makeBybitRequest('/v5/asset/transfer/query-account-coins-balance');
     res.json(data);
   } catch (error) {
-    logger.error(`Ошибка при получении баланса Bybit: ${error.message}`);
+    console.error(`Ошибка при получении баланса Bybit:`, error);
     next(error);
   }
 });
@@ -108,7 +100,7 @@ router.get('/open-orders', async (req, res, next) => {
 
     const resourceStatus = await checkBybitResources();
     if (!resourceStatus.status) {
-      logger.error('Ошибка доступа к Bybit API');
+      console.error('Ошибка доступа к Bybit API');
       return res.status(503).json({
         status: 'error',
         message: resourceStatus.message
@@ -119,10 +111,9 @@ router.get('/open-orders', async (req, res, next) => {
       category: 'spot',
       limit: 50
     });
-    logger.info('Успешно получены открытые ордера Bybit');
     res.json(data);
   } catch (error) {
-    logger.error(`Ошибка при получении открытых ордеров Bybit: ${error.message}`);
+    console.error(`Ошибка при получении открытых ордеров Bybit:`, error);
     next(error);
   }
 });
