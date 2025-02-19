@@ -1,38 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, CircularProgress, Button, Chip } from '@mui/material';
+import { Typography, Box, CircularProgress, Button, Chip } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { styled } from '@mui/material/styles';
-import axiosInstance from '../utils/axiosInstance';
+import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-
-const OrdersContainer = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(2),
-  backgroundColor: theme.palette.background.paper,
-}));
-
-const OrderItem = styled(Box)(({ theme }) => ({
-  padding: theme.spacing(2),
-  marginBottom: theme.spacing(1),
-  borderRadius: theme.shape.borderRadius,
-  border: `1px solid ${theme.palette.divider}`,
-  '&:hover': {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-  },
-}));
 
 interface Order {
   symbol: string;
   orderId: string;
   price: string;
-  quantity: string;
+  origQty: string;
   side: 'BUY' | 'SELL';
   status: string;
+  type: string;
 }
 
-const BybitOrders: React.FC = () => {
+const BinanceOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,16 +25,14 @@ const BybitOrders: React.FC = () => {
   const { isAuthenticated } = useAuth();
 
   const fetchOrders = async () => {
-    console.log('Начало fetchOrders, isAuthenticated:', isAuthenticated);
     setLoading(true);
     setError(null);
     try {
-      const { data } = await axiosInstance.get('/api/bybit/open-orders');
+      const { data } = await axios.get('/api/binance/open-orders');
 
-      if (data?.result?.list) {
-        setOrders(data.result.list);
+      if (data?.orders) {
+        setOrders(data.orders);
         enqueueSnackbar('Ордера успешно обновлены', { variant: 'success' });
-
       } else {
         throw new Error('Некорректный формат данных');
       }
@@ -82,9 +64,9 @@ const BybitOrders: React.FC = () => {
   };
 
   return (
-    <OrdersContainer>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Открытые ордера ByBit</Typography>
+    <Box sx={{ p: 2 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6">Открытые ордера Binance</Typography>
         <Button
           variant="contained"
           startIcon={<RefreshIcon />}
@@ -95,18 +77,24 @@ const BybitOrders: React.FC = () => {
         </Button>
       </Box>
 
-      {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-          <CircularProgress />
-        </Box>
-      )}
+      {loading && <CircularProgress />}
       {error && <Typography color="error">{error}</Typography>}
       {orders.length > 0 ? (
-        <Box>
+        <Box sx={{ mt: 2 }}>
           {orders.map((order) => (
-            <OrderItem key={order.orderId}>
+            <Box
+              key={order.orderId}
+              sx={{
+                p: 2,
+                mb: 1,
+                borderRadius: 1,
+                border: 1,
+                borderColor: 'divider',
+                '&:hover': { bgcolor: 'action.hover' },
+              }}
+            >
               <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+                <Typography variant="subtitle1" fontWeight="bold">
                   {order.symbol}
                 </Typography>
                 <Chip
@@ -116,24 +104,24 @@ const BybitOrders: React.FC = () => {
                 />
               </Box>
               <Box display="flex" justifyContent="space-between" mt={1}>
-                <Typography variant="body2" color="text.secondary">
+                <Typography>
                   Цена: {order.price}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Количество: {order.quantity}
+                <Typography>
+                  Количество: {order.origQty}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {order.status}
+                <Typography color="textSecondary">
+                  {order.type} - {order.status}
                 </Typography>
               </Box>
-            </OrderItem>
+            </Box>
           ))}
         </Box>
       ) : (
         <Typography sx={{ mt: 2 }}>Нет открытых ордеров</Typography>
       )}
-    </OrdersContainer>
+    </Box>
   );
 };
 
-export default BybitOrders;
+export default BinanceOrders;

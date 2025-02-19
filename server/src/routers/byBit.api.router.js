@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const crypto = require('crypto');
 const logger = require('../configs/logger');
+const checkBybitResources = require('../middlewares/checkResourceByBit');
 
 const API_KEY = process.env.BYBIT_API_KEY;
 const API_SECRET = process.env.BYBIT_API_SECRET;
@@ -79,9 +80,20 @@ router.get('/balance', async (req, res, next) => {
       throw error;
     }
 
+    const resourceStatus = await checkBybitResources();
+    if (!resourceStatus.status) {
+      logger.error('Ошибка доступа к Bybit API');
+      return res.status(503).json({
+        status: 'error',
+        message: resourceStatus.message
+      });
+    }
+
     const data = await makeBybitRequest('/v5/account/wallet-balance');
+    logger.info('Успешно получен баланс Bybit');
     res.json(data);
   } catch (error) {
+    logger.error(`Ошибка при получении баланса Bybit: ${error.message}`);
     next(error);
   }
 });
@@ -94,12 +106,23 @@ router.get('/open-orders', async (req, res, next) => {
       throw error;
     }
 
+    const resourceStatus = await checkBybitResources();
+    if (!resourceStatus.status) {
+      logger.error('Ошибка доступа к Bybit API');
+      return res.status(503).json({
+        status: 'error',
+        message: resourceStatus.message
+      });
+    }
+
     const data = await makeBybitRequest('/v5/order/realtime', {
       category: 'spot',
       limit: 50
     });
+    logger.info('Успешно получены открытые ордера Bybit');
     res.json(data);
   } catch (error) {
+    logger.error(`Ошибка при получении открытых ордеров Bybit: ${error.message}`);
     next(error);
   }
 });

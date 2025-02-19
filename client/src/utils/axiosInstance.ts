@@ -12,6 +12,8 @@ export function setAccessToken(newToken: string) {
 }
 
 axiosInstance.interceptors.request.use((config) => {
+  console.log('axiosInstance.ts Текущий accessToken:', accessToken);
+  console.log('axiosInstance.ts Заголовки запроса:', config.headers);
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }

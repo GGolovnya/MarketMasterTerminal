@@ -1,13 +1,18 @@
 const WebSocket = require('ws');
 const crypto = require('crypto');
 const logger = require('../configs/logger');
+const checkBybitResources = require('../middlewares/checkResourceByBit');
 
-// Конфигурация API Bybit
 const API_KEY = process.env.BYBIT_API_KEY;
 const API_SECRET = process.env.BYBIT_API_SECRET;
 const WS_BASE_URL = 'wss://stream.bybit.com/v5/private';
+const CACHE_LIFETIME = 60000;
+const MAX_RECONNECT_DELAY = 300000;
 
-// Функция для создания подписи
+let balanceCache = null;
+let lastUpdate = 0;
+let reconnectAttempts = 0;
+
 const generateSignature = (expires) => {
   return crypto
     .createHmac('sha256', API_SECRET)
@@ -15,7 +20,36 @@ const generateSignature = (expires) => {
     .digest('hex');
 };
 
-// Настройка WebSocket сервера для Bybit
+async function getBalances() {
+  try {
+    const now = Date.now();
+    if (balanceCache && (now - lastUpdate < CACHE_LIFETIME)) {
+      return balanceCache;
+    }
+
+    const resourceCheck = await checkBybitResources();
+    if (!resourceCheck.status) {
+      logger.warn('Bybit API недоступно, возвращаем кешированные данные');
+      return balanceCache || { type: 'balance', balances: [], totalBalance: 0 };
+    }
+
+    // Здесь должна быть логика получения балансов через REST API Bybit
+    // Пример структуры данных
+    balanceCache = {
+      type: 'balance',
+      balances: [],
+      totalBalance: 0
+    };
+    lastUpdate = now;
+
+    return balanceCache;
+  } catch (error) {
+    logger.error('Ошибка получения балансов Bybit:', error);
+    if (balanceCache) return balanceCache;
+    throw error;
+  }
+}
+
 async function setupBybitWebSocketServer(server) {
   const wss = new WebSocket.Server({ 
     server,
@@ -25,9 +59,17 @@ async function setupBybitWebSocketServer(server) {
   let bybitWs;
   let pingInterval;
 
-  // Подключение к Bybit WebSocket
   const connectToBybit = async () => {
     try {
+      const resourceCheck = await checkBybitResources();
+      if (!resourceCheck.status) {
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+        reconnectAttempts++;
+        logger.warn(`Переподключение через ${delay}ms, попытка ${reconnectAttempts}`);
+        setTimeout(connectToBybit, delay);
+        return;
+      }
+
       const expires = Date.now() + 10000;
       const signature = generateSignature(expires.toString());
       
@@ -35,8 +77,8 @@ async function setupBybitWebSocketServer(server) {
       
       bybitWs.on('open', () => {
         logger.info('Соединение с Bybit WebSocket установлено');
+        reconnectAttempts = 0;
         
-        // Аутентификация
         const authMessage = {
           op: 'auth',
           args: [API_KEY, expires.toString(), signature]
@@ -44,7 +86,6 @@ async function setupBybitWebSocketServer(server) {
         
         bybitWs.send(JSON.stringify(authMessage));
         
-        // Подписка на обновления баланса и ордеров
         const subscribeMessage = {
           op: 'subscribe',
           args: ['wallet', 'order']
@@ -52,33 +93,35 @@ async function setupBybitWebSocketServer(server) {
         
         bybitWs.send(JSON.stringify(subscribeMessage));
         
-        // Отправка ping каждые 20 секунд
         pingInterval = setInterval(() => {
-          bybitWs.send(JSON.stringify({ op: 'ping' }));
+          if (bybitWs.readyState === WebSocket.OPEN) {
+            bybitWs.send(JSON.stringify({ op: 'ping' }));
+          }
         }, 20000);
       });
 
-      bybitWs.on('message', (data) => {
+      bybitWs.on('message', async (data) => {
         try {
           const payload = JSON.parse(data.toString());
           
-          // Обработка pong-ответа
           if (payload.op === 'pong') {
             return;
           }
           
-          // Обработка подтверждения аутентификации
           if (payload.op === 'auth' && payload.success) {
             logger.info('Успешная аутентификация в Bybit WebSocket');
             return;
           }
+
+          if (payload.topic === 'wallet' || payload.topic === 'order') {
+            const balances = await getBalances();
+            wss.clients.forEach((client) => {
+              if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify(balances));
+              }
+            });
+          }
           
-          // Отправка обновлений всем подключенным клиентам
-          wss.clients.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify(payload));
-            }
-          });
         } catch (error) {
           logger.error('Ошибка обработки сообщения Bybit:', error);
         }
@@ -87,27 +130,38 @@ async function setupBybitWebSocketServer(server) {
       bybitWs.on('error', (error) => {
         logger.error('Ошибка WebSocket Bybit:', error);
         clearInterval(pingInterval);
-        setTimeout(connectToBybit, 5000);
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+        reconnectAttempts++;
+        setTimeout(connectToBybit, delay);
       });
 
       bybitWs.on('close', () => {
         logger.info('Соединение с Bybit закрыто, переподключение...');
         clearInterval(pingInterval);
-        setTimeout(connectToBybit, 5000);
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+        reconnectAttempts++;
+        setTimeout(connectToBybit, delay);
       });
       
     } catch (error) {
       logger.error('Ошибка подключения к Bybit:', error);
-      setTimeout(connectToBybit, 5000);
+      const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+      reconnectAttempts++;
+      setTimeout(connectToBybit, delay);
     }
   };
 
-  // Начальное подключение
   await connectToBybit();
 
-  // Обработка подключений клиентов
-  wss.on('connection', (ws) => {
+  wss.on('connection', async (ws) => {
     logger.info('Клиент подключен к Bybit WebSocket');
+
+    try {
+      const initialBalance = await getBalances();
+      ws.send(JSON.stringify(initialBalance));
+    } catch (error) {
+      logger.error('Ошибка отправки начального баланса:', error);
+    }
 
     ws.on('close', () => {
       logger.info('Клиент отключен от Bybit WebSocket');
@@ -118,7 +172,6 @@ async function setupBybitWebSocketServer(server) {
     });
   });
 
-  // Очистка при завершении работы сервера
   process.on('SIGINT', () => {
     clearInterval(pingInterval);
     if (bybitWs) {

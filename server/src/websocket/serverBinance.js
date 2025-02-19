@@ -1,12 +1,15 @@
 const WebSocket = require('ws');
 const { Spot } = require('@binance/connector');
+const logger = require('../configs/logger');
+const checkBinanceResources = require('../middlewares/checkResourceBinance');
 
-const CACHE_LIFETIME = 60000; // 1 минута кеширования
-const UPDATE_INTERVAL = 10000; // 10 секунд интервал обновления
+const CACHE_LIFETIME = 60000;
+const MAX_RECONNECT_DELAY = 300000;
 let listenKeyInterval;
 let balanceCache = null;
 let lastUpdate = 0;
 let userSocket = null;
+let reconnectAttempts = 0;
 
 const client = new Spot(
   process.env.BINANCE_API_KEY,
@@ -22,6 +25,12 @@ async function getBalances() {
     const now = Date.now();
     if (balanceCache && (now - lastUpdate < CACHE_LIFETIME)) {
       return balanceCache;
+    }
+
+    const resourceCheck = await checkBinanceResources();
+    if (!resourceCheck.status) {
+      logger.warn('Binance API недоступно, возвращаем кешированные данные');
+      return balanceCache || { type: 'balance', balances: [], totalBalance: 0 };
     }
 
     const [accountInfo, prices] = await Promise.all([
@@ -63,7 +72,7 @@ async function getBalances() {
     
     return balanceCache;
   } catch (error) {
-    console.error('Ошибка получения балансов:', error);
+    logger.error('Ошибка получения балансов:', error);
     if (balanceCache) return balanceCache;
     throw error;
   }
@@ -76,46 +85,64 @@ async function setupUserStream() {
   }
 
   try {
+    const resourceCheck = await checkBinanceResources();
+    if (!resourceCheck.status) {
+      const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+      reconnectAttempts++;
+      logger.warn(`Переподключение через ${delay}ms, попытка ${reconnectAttempts}`);
+      setTimeout(setupUserStream, delay);
+      return;
+    }
+
     const listenKey = await client.createListenKey();
+    reconnectAttempts = 0;
     
-    // Обновление listenKey каждые 30 минут
     listenKeyInterval = setInterval(async () => {
       try {
         await client.renewListenKey(listenKey.data.listenKey);
       } catch (error) {
-        console.error('Ошибка обновления listenKey:', error);
+        logger.error('Ошибка обновления listenKey:', error);
       }
     }, 30 * 60 * 1000);
 
     userSocket = new WebSocket(`wss://stream.binance.com:9443/ws/${listenKey.data.listenKey}`);
     
     userSocket.on('message', async (data) => {
-      const payload = JSON.parse(data);
-      if (payload.e === 'outboundAccountPosition' || payload.e === 'executionReport') {
-        await getBalances();
+      try {
+        const payload = JSON.parse(data);
+        if (payload.e === 'outboundAccountPosition' || payload.e === 'executionReport') {
+          await getBalances();
+        }
+      } catch (error) {
+        logger.error('Ошибка обработки сообщения:', error);
       }
     });
 
     userSocket.on('error', (error) => {
-      console.error('Ошибка WebSocket соединения:', error);
-      setTimeout(setupUserStream, 5000);
+      logger.error('Ошибка WebSocket соединения:', error);
+      const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+      reconnectAttempts++;
+      setTimeout(setupUserStream, delay);
     });
 
     userSocket.on('close', () => {
-      console.log('WebSocket соединение закрыто, переподключение...');
-      setTimeout(setupUserStream, 5000);
+      logger.info('WebSocket соединение закрыто, переподключение...');
+      const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+      reconnectAttempts++;
+      setTimeout(setupUserStream, delay);
     });
 
   } catch (error) {
-    console.error('Ошибка установки user stream:', error);
-    setTimeout(setupUserStream, 5000);
+    logger.error('Ошибка установки user stream:', error);
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+    reconnectAttempts++;
+    setTimeout(setupUserStream, delay);
   }
 }
 
 function setupWebSocketServer(server) {
   const wss = new WebSocket.Server({ server, path: '/ws/binance/balance' });
 
-  // Инициализация user stream при запуске сервера
   setupUserStream();
 
   wss.on('connection', async (ws) => {
@@ -123,7 +150,6 @@ function setupWebSocketServer(server) {
       const initialBalance = await getBalances();
       ws.send(JSON.stringify(initialBalance));
 
-      // Обработка ping сообщений
       ws.on('message', (message) => {
         try {
           const data = JSON.parse(message);
@@ -131,16 +157,16 @@ function setupWebSocketServer(server) {
             ws.send(JSON.stringify({ type: 'pong' }));
           }
         } catch (error) {
-          console.error('Ошибка обработки сообщения:', error);
+          logger.error('Ошибка обработки сообщения:', error);
         }
       });
 
       ws.on('close', () => {
-        // Очистка не требуется, так как user stream общий для всех клиентов
+        logger.info('Клиент отключен');
       });
 
     } catch (error) {
-      console.error('Ошибка в WebSocket соединении:', error);
+      logger.error('Ошибка в WebSocket соединении:', error);
       ws.close();
     }
   });

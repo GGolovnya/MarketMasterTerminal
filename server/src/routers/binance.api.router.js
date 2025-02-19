@@ -1,5 +1,7 @@
 const router = require("express").Router();
 const { Spot } = require('@binance/connector');
+const logger = require('../configs/logger');
+const checkBinanceResources = require('../middlewares/checkResourceBinance');
 
 const client = new Spot(
   process.env.BINANCE_API_KEY,
@@ -16,6 +18,15 @@ router.get('/balance', async (req, res, next) => {
       const error = new Error('API ключи Binance не настроены');
       error.name = 'ValidationError';
       throw error;
+    }
+
+    const resourceStatus = await checkBinanceResources();
+    if (!resourceStatus.status) {
+      logger.error('Ошибка доступа к Binance API');
+      return res.status(503).json({
+        status: 'error',
+        message: resourceStatus.message
+      });
     }
 
     const [accountInfo, tickerPrices] = await Promise.all([
@@ -65,12 +76,14 @@ router.get('/balance', async (req, res, next) => {
     }
 
     binanceBalances.sort((a, b) => b.usdValue - a.usdValue);
+    logger.info('Успешно получены балансы Binance');
     
     res.json({ 
       binanceBalances, 
       totalBinanceBalance: parseFloat(totalBinanceBalance.toFixed(2)) 
     });
   } catch (error) {
+    logger.error(`Ошибка при получении баланса Binance: ${error.message}`);
     next(error);
   }
 });
@@ -83,6 +96,15 @@ router.get('/open-orders', async (req, res, next) => {
       throw error;
     }
 
+    const resourceStatus = await checkBinanceResources();
+    if (!resourceStatus.status) {
+      logger.error('Ошибка доступа к Binance API');
+      return res.status(503).json({
+        status: 'error',
+        message: resourceStatus.message
+      });
+    }
+
     const openOrders = await client.openOrders();
     
     if (!openOrders.data) {
@@ -91,10 +113,12 @@ router.get('/open-orders', async (req, res, next) => {
       throw error;
     }
 
+    logger.info('Успешно получены открытые ордера Binance');
     res.json({
       orders: openOrders.data
     });
   } catch (error) {
+    logger.error(`Ошибка при получении открытых ордеров Binance: ${error.message}`);
     next(error);
   }
 });
