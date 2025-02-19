@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Box, CircularProgress, Button, Chip } from '@mui/material';
+import { Box, Typography, Paper, CircularProgress, Button, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+
+const OrdersContainer = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(2),
+  marginBottom: theme.spacing(2),
+  backgroundColor: theme.palette.background.paper,
+  width: '100%',
+}));
 
 interface Order {
   symbol: string;
@@ -14,6 +22,7 @@ interface Order {
   side: 'BUY' | 'SELL';
   status: string;
   type: string;
+  time: string;
 }
 
 const BinanceOrders: React.FC = () => {
@@ -39,7 +48,6 @@ const BinanceOrders: React.FC = () => {
     } catch (err) {
       if (err.response?.status === 401) {
         enqueueSnackbar('Сессия истекла. Пожалуйста, войдите снова', { variant: 'error' });
-        // navigate('/login');
         return;
       }
       const errorMsg = err.response?.data?.message || 'Ошибка получения ордеров';
@@ -53,19 +61,18 @@ const BinanceOrders: React.FC = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      // navigate('/login');
       return;
     }
     fetchOrders();
   }, [isAuthenticated, navigate]);
 
-  const getSideColor = (side: 'BUY' | 'SELL') => {
-    return side === 'BUY' ? 'success' : 'error';
+  const formatDate = (dateString: string) => {
+    return new Date(parseInt(dateString)).toLocaleString();
   };
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+    <OrdersContainer>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">Открытые ордера Binance</Typography>
         <Button
           variant="contained"
@@ -77,50 +84,54 @@ const BinanceOrders: React.FC = () => {
         </Button>
       </Box>
 
-      {loading && <CircularProgress />}
-      {error && <Typography color="error">{error}</Typography>}
-      {orders.length > 0 ? (
-        <Box sx={{ mt: 2 }}>
-          {orders.map((order) => (
-            <Box
-              key={order.orderId}
-              sx={{
-                p: 2,
-                mb: 1,
-                borderRadius: 1,
-                border: 1,
-                borderColor: 'divider',
-                '&:hover': { bgcolor: 'action.hover' },
-              }}
-            >
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography variant="subtitle1" fontWeight="bold">
-                  {order.symbol}
-                </Typography>
-                <Chip
-                  label={order.side}
-                  color={getSideColor(order.side)}
-                  size="small"
-                />
-              </Box>
-              <Box display="flex" justifyContent="space-between" mt={1}>
-                <Typography>
-                  Цена: {order.price}
-                </Typography>
-                <Typography>
-                  Количество: {order.origQty}
-                </Typography>
-                <Typography color="textSecondary">
-                  {order.type} - {order.status}
-                </Typography>
-              </Box>
-            </Box>
-          ))}
+      {loading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+          <CircularProgress />
         </Box>
-      ) : (
+      )}
+      {error && <Typography color="error">{error}</Typography>}
+
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Пара</TableCell>
+              <TableCell>Тип</TableCell>
+              <TableCell>Направление</TableCell>
+              <TableCell>Цена</TableCell>
+              <TableCell>Количество</TableCell>
+              <TableCell>Статус</TableCell>
+              <TableCell>Время</TableCell>
+              <TableCell>ID</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {orders.map((order) => (
+              <TableRow key={order.orderId}>
+                <TableCell>{order.symbol}</TableCell>
+                <TableCell>{order.type}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={order.side}
+                    color={order.side === 'BUY' ? 'success' : 'error'}
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell>{order.price}</TableCell>
+                <TableCell>{order.origQty}</TableCell>
+                <TableCell>{order.status}</TableCell>
+                <TableCell>{formatDate(order.time)}</TableCell>
+                <TableCell>{order.orderId}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {orders.length === 0 && !loading && (
         <Typography sx={{ mt: 2 }}>Нет открытых ордеров</Typography>
       )}
-    </Box>
+    </OrdersContainer>
   );
 };
 

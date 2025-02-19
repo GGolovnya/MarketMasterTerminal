@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, CircularProgress, Button } from '@mui/material';
+import { Box, Typography, Paper, CircularProgress, Button, Grid } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
@@ -11,6 +11,7 @@ const BalanceContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   marginBottom: theme.spacing(2),
   backgroundColor: theme.palette.background.paper,
+  width: '100%'
 }));
 
 const BalanceItem = styled(Box)(({ theme }) => ({
@@ -56,7 +57,6 @@ const BinanceBalance: React.FC = () => {
     } catch (err) {
       if (err.response?.status === 401) {
         enqueueSnackbar('Сессия истекла. Пожалуйста, войдите снова', { variant: 'error' });
-        // navigate('/login');
         return;
       }
       const errorMsg = err.response?.data?.message || 'Ошибка получения баланса';
@@ -70,7 +70,6 @@ const BinanceBalance: React.FC = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      // navigate('/login');
       return;
     }
     fetchBalance();

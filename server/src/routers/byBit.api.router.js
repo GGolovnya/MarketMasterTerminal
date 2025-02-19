@@ -31,17 +31,11 @@ const generateSignature = (params = {}) => {
 const makeBybitRequest = async (endpoint, params = {}) => {
   const { signature, timestamp, queryString } = generateSignature(params);
   
-  console.log('Параметры для подписи:', params);
-  console.log('Сгенерированная строка запроса:', queryString);
-  console.log('Сгенерированная подпись:', signature);
-
   const headers = {
     'X-BAPI-API-KEY': API_KEY,
     'X-BAPI-SIGN': signature,
     'X-BAPI-TIMESTAMP': timestamp.toString()
   };
-
-  console.log(`Отправка запроса к ${endpoint}`, { headers, params });
 
   const response = await fetch(`${BASE_URL}${endpoint}?${queryString}`, {
     method: 'GET',
@@ -82,7 +76,9 @@ router.get('/balance', async (req, res, next) => {
       });
     }
 
-    const data = await makeBybitRequest('/v5/asset/transfer/query-account-coins-balance');
+    const data = await makeBybitRequest('/v5/account/wallet-balance', {
+      accountType: 'UNIFIED'
+    });
     res.json(data);
   } catch (error) {
     console.error(`Ошибка при получении баланса Bybit:`, error);
