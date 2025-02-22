@@ -8,8 +8,8 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-import { connectWebSocket, TickerData } from '../api/binanceAPI';
-import { tableStyles } from '../style/components/tables';
+import { connectWebSocket, TickerData } from '../../api/binanceAPI';
+import { tableStyles } from '../../style/components/tables';
 
 function CryptoList() {
   const [cryptoList, setCryptoList] = useState<TickerData[]>([]);

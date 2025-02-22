@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, CircularProgress, Button, Grid } from '@mui/material';
+import { Box, Typography, Paper, CircularProgress, Button } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { styled } from '@mui/material/styles';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const BalanceContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   marginBottom: theme.spacing(2),
   backgroundColor: theme.palette.background.paper,
-  width: '100%'
+  width: '100%',
 }));
 
 const BalanceItem = styled(Box)(({ theme }) => ({
@@ -29,12 +29,14 @@ const BalanceItem = styled(Box)(({ theme }) => ({
 }));
 
 interface Balance {
-  symbol: string;
-  amount: number;
-  usdValue: number;
+  coin: string;
+  walletBalance: string;
+  availableToWithdraw: string;
+  locked: string;
+  usdValue: string;
 }
 
-const BinanceBalance: React.FC = () => {
+const BybitBalance: React.FC = () => {
   const [balances, setBalances] = useState<Balance[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,10 +48,10 @@ const BinanceBalance: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await axios.get('/api/binance/balance');
+      const { data } = await axiosInstance.get('/api/bybit/balance');
 
-      if (data?.binanceBalances) {
-        setBalances(data.binanceBalances);
+      if (data?.result?.list?.[0]?.coin) {
+        setBalances(data.result.list[0].coin);
         enqueueSnackbar('Баланс успешно обновлен', { variant: 'success' });
       } else {
         throw new Error('Некорректный формат данных');
@@ -57,6 +59,7 @@ const BinanceBalance: React.FC = () => {
     } catch (err) {
       if (err.response?.status === 401) {
         enqueueSnackbar('Сессия истекла. Пожалуйста, войдите снова', { variant: 'error' });
+        navigate('/login');
         return;
       }
       const errorMsg = err.response?.data?.message || 'Ошибка получения баланса';
@@ -70,19 +73,20 @@ const BinanceBalance: React.FC = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
+      navigate('/login');
       return;
     }
     fetchBalance();
   }, [isAuthenticated, navigate]);
 
-  const formatNumber = (num: number) => {
-    return num.toFixed(8).replace(/\.?0+$/, '');
+  const formatNumber = (num: string) => {
+    return parseFloat(num).toFixed(8).replace(/\.?0+$/, '');
   };
 
   return (
     <BalanceContainer>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Баланс Binance</Typography>
+        <Typography variant="h6">Баланс ByBit</Typography>
         <Button
           variant="contained"
           startIcon={<RefreshIcon />}
@@ -102,17 +106,19 @@ const BinanceBalance: React.FC = () => {
       {balances.length > 0 && (
         <Box>
           {balances.map((balance) => (
-            <BalanceItem key={balance.symbol}>
+            <BalanceItem key={balance.coin}>
               <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                {balance.symbol}
+                {balance.coin}
               </Typography>
               <Box sx={{ textAlign: 'right' }}>
                 <Typography variant="body2" color="text.secondary">
-                  {formatNumber(balance.amount)}
+                  {formatNumber(balance.walletBalance)} (${formatNumber(balance.usdValue)})
                 </Typography>
-                <Typography variant="body2" color="primary">
-                  ${balance.usdValue.toFixed(2)}
-                </Typography>
+                {parseFloat(balance.locked) > 0 && (
+                  <Typography variant="body2" color="warning.main">
+                    {formatNumber(balance.locked)} (в ордерах)
+                  </Typography>
+                )}
               </Box>
             </BalanceItem>
           ))}
@@ -122,4 +128,4 @@ const BinanceBalance: React.FC = () => {
   );
 };
 
-export default BinanceBalance;
+export default BybitBalance;

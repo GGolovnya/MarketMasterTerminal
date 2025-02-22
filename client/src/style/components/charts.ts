@@ -11,7 +11,7 @@ export const chartStyles = {
 
   // Заголовок графика
   title: {
-    fontSize: '1.25rem',
+    fontSize: '1.0 rem',
     fontWeight: 600,
     marginBottom: '16px',
     color: 'rgba(255, 255, 255, 1)',

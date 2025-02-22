@@ -7,9 +7,9 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
-import { formStyles } from '../style/components/forms';
-import { buttonStyles } from '../style/components/buttons';
-import { layoutStyles } from '../style/components/layout';
+import { formStyles } from '../../style/components/forms';
+import { buttonStyles } from '../../style/components/buttons';
+import { layoutStyles } from '../../style/components/layout';
 
 function OrderForm() {
   const [orderType, setOrderType] = useState('buy');

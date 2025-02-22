@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Paper, CircularProgress, Button } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { styled } from '@mui/material/styles';
-import axiosInstance from '../utils/axiosInstance';
+import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const BalanceContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -29,14 +29,12 @@ const BalanceItem = styled(Box)(({ theme }) => ({
 }));
 
 interface Balance {
-  coin: string;
-  walletBalance: string;
-  availableToWithdraw: string;
-  locked: string;
-  usdValue: string;
+  symbol: string;
+  amount: number;
+  usdValue: number;
 }
 
-const BybitBalance: React.FC = () => {
+const BinanceBalance: React.FC = () => {
   const [balances, setBalances] = useState<Balance[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,10 +46,10 @@ const BybitBalance: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await axiosInstance.get('/api/bybit/balance');
+      const { data } = await axios.get('/api/binance/balance');
 
-      if (data?.result?.list?.[0]?.coin) {
-        setBalances(data.result.list[0].coin);
+      if (data?.binanceBalances) {
+        setBalances(data.binanceBalances);
         enqueueSnackbar('Баланс успешно обновлен', { variant: 'success' });
       } else {
         throw new Error('Некорректный формат данных');
@@ -59,7 +57,6 @@ const BybitBalance: React.FC = () => {
     } catch (err) {
       if (err.response?.status === 401) {
         enqueueSnackbar('Сессия истекла. Пожалуйста, войдите снова', { variant: 'error' });
-        navigate('/login');
         return;
       }
       const errorMsg = err.response?.data?.message || 'Ошибка получения баланса';
@@ -73,20 +70,19 @@ const BybitBalance: React.FC = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login');
       return;
     }
     fetchBalance();
   }, [isAuthenticated, navigate]);
 
-  const formatNumber = (num: string) => {
-    return parseFloat(num).toFixed(8).replace(/\.?0+$/, '');
+  const formatNumber = (num: number) => {
+    return num.toFixed(8).replace(/\.?0+$/, '');
   };
 
   return (
     <BalanceContainer>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Баланс ByBit</Typography>
+        <Typography variant="h6">Баланс Binance</Typography>
         <Button
           variant="contained"
           startIcon={<RefreshIcon />}
@@ -106,19 +102,17 @@ const BybitBalance: React.FC = () => {
       {balances.length > 0 && (
         <Box>
           {balances.map((balance) => (
-            <BalanceItem key={balance.coin}>
+            <BalanceItem key={balance.symbol}>
               <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
-                {balance.coin}
+                {balance.symbol}
               </Typography>
               <Box sx={{ textAlign: 'right' }}>
                 <Typography variant="body2" color="text.secondary">
-                  {formatNumber(balance.walletBalance)} (${formatNumber(balance.usdValue)})
+                  {formatNumber(balance.amount)}
                 </Typography>
-                {parseFloat(balance.locked) > 0 && (
-                  <Typography variant="body2" color="warning.main">
-                    {formatNumber(balance.locked)} (в ордерах)
-                  </Typography>
-                )}
+                <Typography variant="body2" color="primary">
+                  ${balance.usdValue.toFixed(2)}
+                </Typography>
               </Box>
             </BalanceItem>
           ))}
@@ -128,4 +122,4 @@ const BybitBalance: React.FC = () => {
   );
 };
 
-export default BybitBalance;
+export default BinanceBalance;

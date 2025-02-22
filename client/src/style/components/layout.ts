@@ -27,7 +27,7 @@ export const layoutStyles = {
   card: {
     backgroundColor: 'rgba(27, 27, 27, 0.95)',
     borderRadius: '12px',
-    padding: '24px',
+    padding: '16px',
     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
   },
 

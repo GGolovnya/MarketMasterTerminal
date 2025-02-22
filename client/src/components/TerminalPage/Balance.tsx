@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Box, Typography, Paper, CircularProgress, Button } from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { styled } from '@mui/material/styles';
-import { layoutStyles } from '../style/components/layout';
+import { layoutStyles } from '../../style/components/layout';
 import { ErrorBoundary } from 'react-error-boundary';
 
 // Стилизованный контейнер для отображения баланса
 const BalanceContainer = styled(Paper)(({ theme }) => ({
   ...layoutStyles.card,
-  padding: theme.spacing(3),
-  marginBottom: theme.spacing(2),
+  padding: theme.spacing(2),
+  maxWidth: 180,
 }));
 
 // Стилизованный элемент для отображения информации о монете
@@ -53,7 +54,7 @@ interface ErrorFallbackProps {
 // Компонент для отображения ошибок
 const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetErrorBoundary }) => (
   <Box role="alert" sx={{ p: 2 }}>
-    <Typography color="error" variant="h6" gutterBottom>
+    <Typography color="error" gutterBottom>
       Что-то пошло не так:
     </Typography>
     <Typography gutterBottom>
@@ -125,18 +126,18 @@ const Balance = () => {
     >
       <BalanceContainer>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             Общий баланс: ${formatNumber(totalBalance)}
           </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={fetchBalance}
-            disabled={loading}
-          >
-            Обновить
-          </Button>
         </Box>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={fetchBalance}
+          startIcon={<RefreshIcon />}
+          disabled={loading}
+        >
+        </Button>
 
         {/* Условный рендеринг в зависимости от состояния */}
         {loading ? (
@@ -144,7 +145,7 @@ const Balance = () => {
             <CircularProgress />
           </Box>
         ) : error ? (
-          <Typography color="error" sx={{ p: 2 }}>
+          <Typography color="error" sx={{ p: 0 }}>
             {error}
           </Typography>
         ) : (

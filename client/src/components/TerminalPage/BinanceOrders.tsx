@@ -5,7 +5,7 @@ import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const OrdersContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),

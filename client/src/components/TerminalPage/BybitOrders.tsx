@@ -2,17 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Paper, CircularProgress, Button, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import SortIcon from '@mui/icons-material/Sort';
 import { styled } from '@mui/material/styles';
-import axiosInstance from '../utils/axiosInstance';
+import axiosInstance from '../../utils/axiosInstance';
 import { useSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const OrdersContainer = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
   marginBottom: theme.spacing(2),
   backgroundColor: theme.palette.background.paper,
 }));
+
+const EditIconStyled = styled(EditIcon)({
+  color: 'rgb(236, 148, 8)',
+  fontSize: '18px',
+});
+
+const SortIconStyled = styled(SortIcon)({
+  fontSize: '16px',
+  color: '#9e9e9e',
+  verticalAlign: 'middle',
+  marginLeft: '4px',
+});
 
 interface Order {
   symbol: string;
@@ -89,6 +103,11 @@ const BybitOrders: React.FC = () => {
     }
   };
 
+  const handleEditOrder = (orderId: string, field: string) => {
+    // TODO: Настроить чункционал на кнопки редиктирования и под каждую кнопку создать свою логику
+    console.log(`Editing ${field} for order ${orderId}`);
+  };
+
   return (
     <OrdersContainer>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -104,7 +123,7 @@ const BybitOrders: React.FC = () => {
       </Box>
 
       {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 2 }}>
           <CircularProgress />
         </Box>
       )}
@@ -114,17 +133,56 @@ const BybitOrders: React.FC = () => {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Пара</TableCell>
-              <TableCell>Рынок</TableCell>
-              <TableCell>Тип ордера</TableCell>
-              <TableCell>Направление</TableCell>
-              <TableCell>Цена исполнения</TableCell>
-              <TableCell>Исполнено</TableCell>
-              <TableCell>Количество</TableCell>
-              <TableCell>Стоимость ордера</TableCell>
-              <TableCell>TP/SL</TableCell>
-              <TableCell>Время ордера</TableCell>
-              <TableCell>ID</TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  Пара <SortIconStyled />
+                </Box>
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  Рынок <SortIconStyled />
+                </Box>
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  Тип ордера <SortIconStyled />
+                </Box>
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  Направление <SortIconStyled />
+                </Box>
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  Цена исполнения <SortIconStyled />
+                </Box>
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  Исполнено/Количество <SortIconStyled />
+                </Box>
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  Стоимость ордера <SortIconStyled />
+                </Box>
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  TP/SL <SortIconStyled />
+                </Box>
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  Время ордера <SortIconStyled />
+                </Box>
+              </TableCell>
+              <TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  ID <SortIconStyled />
+                </Box>
+              </TableCell>
               <TableCell>Действия</TableCell>
             </TableRow>
           </TableHead>
@@ -137,18 +195,53 @@ const BybitOrders: React.FC = () => {
                 <TableCell>
                   <Chip
                     label={order.side}
-                    color={order.side === 'BUY' ? 'success' : 'error'}
+                    color={order.side.toUpperCase() === 'BUY' ? 'success' : 'error'}
                     size="small"
                   />
                 </TableCell>
-                <TableCell>{formatNumber(order.price)}$</TableCell>
-                <TableCell>{formatNumber(order.executed)}%</TableCell>
-                <TableCell>{formatNumber(order.leavesValue)}</TableCell>
+                <TableCell >
+                  {formatNumber(order.price)}$
+                  <IconButton
+                    size="small"
+                    onClick={() => handleEditOrder(order.orderId, 'price')}
+                  >
+                    <EditIconStyled />
+                  </IconButton>
+                </TableCell>
+                <TableCell>
+                  {formatNumber(order.executed)}% / {formatNumber(order.leavesValue)}
+                  <IconButton
+                    size="small"
+                    onClick={() => handleEditOrder(order.orderId, 'quantity')}
+                  >
+                    <EditIconStyled />
+                  </IconButton>
+                </TableCell>
                 <TableCell>{formatNumber(order.leavesQty)}$</TableCell>
                 <TableCell>
-                  {order.takeProfit && `TP: ${formatNumber(order.takeProfit)}$`}
+                  {order.takeProfit && (
+                    <>
+                      TP: {formatNumber(order.takeProfit)}$
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEditOrder(order.orderId, 'tp')}
+                      >
+                        <EditIconStyled />
+                      </IconButton>
+                    </>
+                  )}
                   {order.stopLoss && <br/>}
-                  {order.stopLoss && `SL: ${formatNumber(order.stopLoss)}$`}
+                  {order.stopLoss && (
+                    <>
+                      SL: {formatNumber(order.stopLoss)}$
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEditOrder(order.orderId, 'sl')}
+                      >
+                        <EditIconStyled />
+                      </IconButton>
+                    </>
+                  )}
                 </TableCell>
                 <TableCell>{formatDate(order.createdTime)}</TableCell>
                 <TableCell>{order.orderId}</TableCell>
