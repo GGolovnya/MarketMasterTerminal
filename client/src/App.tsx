@@ -6,11 +6,12 @@ import  Register from './pages/RegisterPage';
 import { useAuth } from './contexts/AuthContext';
 import Terminal from './pages/TerminalPage';
 import PersonalAccount from './pages/PersonalAccount';
+import HomePage from './pages/HomePage';
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) {
-    return null; // или показать спиннер загрузки
+    return null;
   }
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
@@ -20,6 +21,7 @@ export const App = () => {
     <BrowserRouter>
       <Navigation />
       <Routes>
+        <Route path="/" element={<HomePage/>} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Register />} />
         <Route path="/profile" element={
@@ -32,7 +34,6 @@ export const App = () => {
             <Terminal/>
           </PrivateRoute>
         } />
-        <Route path="/" element={<div>Главная страница</div>} />
       </Routes>
     </BrowserRouter>
   );
