@@ -50,6 +50,7 @@ const PersonalAccount: React.FC = () => {
 
   return (
     <Container maxWidth={false}>
+      <Typography sx={{ pt: 2 }}>Доступные биржи для подключения</Typography>
       {exchanges.map((exchange) => (
         <Paper
           key={exchange.id}
