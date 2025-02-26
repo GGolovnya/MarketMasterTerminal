@@ -2,40 +2,23 @@ const router = require("express").Router();
 const crypto = require('crypto');
 const logger = require('../configs/logger');
 const checkBybitResources = require('../middlewares/checkResourceByBit');
+const ApiKeyService = require("../services/apiKeyService");
+const { decrypt } = require("../utils/encryption");
+const bybitGenerateSignature = require('../utils/signatures/bybit/bybitGenerateSignature');
 
-const API_KEY = process.env.BYBIT_API_KEY;
-const API_SECRET = process.env.BYBIT_API_SECRET;
 const BASE_URL = 'https://api.bybit.com';
+const apiKeyService = new ApiKeyService();
 
-const generateSignature = (params = {}) => {
-  const timestamp = Date.now();
-  const allParams = {
-    ...params,
-    api_key: API_KEY,
-    timestamp: timestamp.toString()
-  };
-
-  const queryString = Object.keys(allParams)
-    .sort()
-    .map(key => `${key}=${allParams[key]}`)
-    .join('&');
-
-  const signature = crypto
-    .createHmac('sha256', API_SECRET)
-    .update(timestamp.toString() + API_KEY + queryString)
-    .digest('hex');
-
-  return { signature, timestamp, queryString };
-};
-
-const makeBybitRequest = async (endpoint, params = {}) => {
-  const { signature, timestamp, queryString } = generateSignature(params);
+const makeBybitRequest = async (apiKey, apiSecret, endpoint, params = {}) => {
+  const { signature, timestamp, queryString } = bybitGenerateSignature(apiKey, apiSecret, params);
   
   const headers = {
-    'X-BAPI-API-KEY': API_KEY,
+    'X-BAPI-API-KEY': apiKey,
     'X-BAPI-SIGN': signature,
     'X-BAPI-TIMESTAMP': timestamp.toString()
   };
+
+  logger.info('Making Bybit API request', { endpoint, params });
 
   const response = await fetch(`${BASE_URL}${endpoint}?${queryString}`, {
     method: 'GET',
@@ -43,6 +26,11 @@ const makeBybitRequest = async (endpoint, params = {}) => {
   });
 
   if (!response.ok) {
+    logger.error('Bybit API HTTP error', { 
+      status: response.status,
+      endpoint,
+      params 
+    });
     const error = new Error(`HTTP error! status: ${response.status}`);
     error.name = 'ServerError';
     throw error;
@@ -51,65 +39,104 @@ const makeBybitRequest = async (endpoint, params = {}) => {
   const data = await response.json();
   
   if (data.retCode !== 0) {
+    logger.error('Bybit API response error', {
+      retCode: data.retCode,
+      retMsg: data.retMsg,
+      endpoint,
+      params
+    });
     const error = new Error(data.retMsg || 'API error');
     error.name = 'ServerError';
     throw error;
   }
 
+  logger.info('Bybit API request successful', { endpoint });
   return data;
 };
 
 router.get('/balance', async (req, res, next) => {
   try {
-    if (!API_KEY || !API_SECRET) {
-      const error = new Error('API ключи Bybit не настроены');
+    const userId = req.user.id;
+    logger.info('Fetching Bybit balance', { userId });
+    
+    const keys = await apiKeyService.getApiKeys(userId, 'bybit');
+    
+    if (!keys) {
+      logger.warn('Bybit API keys not found', { userId });
+      const error = new Error('API ключи Bybit не найдены');
       error.name = 'ValidationError';
       throw error;
     }
 
+    const apiKey = decrypt(keys.apiKey, keys.apiKeyIv, keys.apiKeyAuthTag);
+    const apiSecret = decrypt(keys.apiSecret, keys.apiSecretIv, keys.apiSecretAuthTag);
+
     const resourceStatus = await checkBybitResources();
     if (!resourceStatus.status) {
-      console.error('Ошибка доступа к Bybit API');
+      logger.error('Bybit API access error', { 
+        userId,
+        message: resourceStatus.message 
+      });
       return res.status(503).json({
         status: 'error',
         message: resourceStatus.message
       });
     }
 
-    const data = await makeBybitRequest('/v5/account/wallet-balance', {
+    const data = await makeBybitRequest(apiKey, apiSecret, '/v5/account/wallet-balance', {
       accountType: 'UNIFIED'
     });
     res.json(data);
   } catch (error) {
-    console.error(`Ошибка при получении баланса Bybit:`, error);
+    logger.error('Error fetching Bybit balance', {
+      userId: req.user.id,
+      error: error.message,
+      stack: error.stack
+    });
     next(error);
   }
 });
 
 router.get('/open-orders', async (req, res, next) => {
   try {
-    if (!API_KEY || !API_SECRET) {
-      const error = new Error('API ключи Bybit не настроены');
+    const userId = req.user.id;
+    logger.info('Fetching Bybit open orders', { userId });
+    
+    const keys = await apiKeyService.getApiKeys(userId, 'bybit');
+    
+    if (!keys) {
+      logger.warn('Bybit API keys not found', { userId });
+      const error = new Error('API ключи Bybit не найдены');
       error.name = 'ValidationError';
       throw error;
     }
 
+    const apiKey = decrypt(keys.apiKey, keys.apiKeyIv, keys.apiKeyAuthTag);
+    const apiSecret = decrypt(keys.apiSecret, keys.apiSecretIv, keys.apiSecretAuthTag);
+
     const resourceStatus = await checkBybitResources();
     if (!resourceStatus.status) {
-      console.error('Ошибка доступа к Bybit API');
+      logger.error('Bybit API access error', {
+        userId,
+        message: resourceStatus.message
+      });
       return res.status(503).json({
         status: 'error',
         message: resourceStatus.message
       });
     }
 
-    const data = await makeBybitRequest('/v5/order/realtime', {
+    const data = await makeBybitRequest(apiKey, apiSecret, '/v5/order/realtime', {
       category: 'spot',
       limit: 50
     });
     res.json(data);
   } catch (error) {
-    console.error(`Ошибка при получении открытых ордеров Bybit:`, error);
+    logger.error('Error fetching Bybit open orders', {
+      userId: req.user.id,
+      error: error.message,
+      stack: error.stack
+    });
     next(error);
   }
 });
