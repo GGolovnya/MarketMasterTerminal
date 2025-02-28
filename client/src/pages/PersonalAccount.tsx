@@ -7,11 +7,14 @@ import {
   IconButton,
 } from '@mui/material';
 import { Check, Add } from '@mui/icons-material';
+import { stylePersonalAccount } from '../style/components/style.personalAccount';
 import { DeleteButton } from '../components/buttons/DeleteButton';
 import { EditButton } from '../components/buttons/EditButton';
 import { ConnectButton } from '../components/buttons/ConnectButton';
-import { stylePersonalAccount } from '../style/components/style.personalAccount';
+import  ApiKeyForm  from '../components/PersonalAccount/forms/ApiKeyForm';
+import { exchanges, Exchange } from './mockData'; // Импортируем exchanges из нового файла
 
+//Стили
 const {
   personalAccountContainerStyle, // Стиль для основного контейнера страницы
   exchangeScrollContainerStyle, // Стиль для контейнера с горизонтальной прокруткой
@@ -23,68 +26,150 @@ const {
   instanceInfoContainerStyle, // Стиль для инфо о дополнительном подключении
 } = stylePersonalAccount;
 
-interface Exchange {
-  id: string;
-  name: string;
-  isConnected: boolean;
-}
+// Интерфейсы
 
 interface ExchangeInstance extends Exchange {
   nickName: string;
   parentId: string;
 }
 
+interface FormState {
+  isOpen: boolean;
+  exchangeId: string | null;
+  exchangeName: string;
+  isEdit: boolean;
+  initialData: {
+    apiKey: string;
+    apiSecret: string;
+    nickName: string;
+  };
+}
+
 const PersonalAccount: React.FC = () => {
   // Моковые данные бирж (надо создать БД под них и заменить на запросы)
-  const [exchanges] = useState<Exchange[]>([
-    {
-      id: 'exchange_binance_01',
-      name: 'Binance',
-      isConnected: false,
-    },
-    {
-      id: 'exchange_bybit_02',
-      name: 'Bybit',
-      isConnected: true,
-    },
-    {
-      id: 'exchange_bybit_03',
-      name: 'Кракен',
-      isConnected: false,
-    },
-    {
-      id: 'exchange_bybit_04',
-      name: 'Йобит',
-      isConnected: false,
-    },
-    {
-      id: 'exchange_Йобит_05',
-      name: 'Trust',
-      isConnected: false,
-    },
-    {
-      id: 'exchange_BitCap_06',
-      name: 'BitCap',
-      isConnected: false,
-    },
-  ]);
+  const [localExchanges] = useState<Exchange[]>(exchanges);
 
   const [instances, setInstances] = useState<ExchangeInstance[]>([]);
+
+  // Изменённое состояние для управления формами API ключей для каждой карточки
+  const [formsState, setFormsState] = useState<Record<string, FormState>>({});
 
   // Моковые обработчики событий для кнопок карточки
   // TODO: Добавить интеграцию с API биржи для получения и обновления ключей
   const handleEditApiExchange = (id: string) => {
     console.log('Редактирование биржи:', id);
+
+    // Сначала проверяем, это экземпляр или базовая биржа
+    const instanceExchange = instances.find(inst => inst.id === id);
+    const basicExchange = localExchanges.find(ex => ex.id === id);
+
+    // Используем найденный объект
+    const exchange = instanceExchange || basicExchange;
+
+    if (exchange) {
+      setFormsState(prev => ({
+        ...prev,
+        [id]: {
+          isOpen: true,
+          exchangeId: id,
+          exchangeName: exchange.name,
+          isEdit: true,
+          initialData: {
+            apiKey: '********',
+            apiSecret: '********',
+            // Используем TypeGuard для правильной типизации
+            nickName: instanceExchange ? instanceExchange.nickName : exchange.name,
+          },
+        },
+      }));
+    }
   };
 
   // TODO: Реализовать удаление API ключей из БД и отключение от WebSocket
   const handleDeleteConnectExchange = (id: string) => {
     console.log('Удаление биржи:', id);
+    // Здесь будет логика удаления ключей из БД
   };
 
   // TODO: Добавить форму для ввода API ключей и их сохранение в БД
+  // Обновленная функция для открытия формы
   const handleConnectExchange = (id: string) => {
     console.log('Подключение биржи:', id);
+
+    // Сначала проверяем, это экземпляр или базовая биржа
+    const instanceExchange = instances.find(inst => inst.id === id);
+    const basicExchange = exchanges.find(ex => ex.id === id);
+
+    // Используем найденный объект
+    const exchange = instanceExchange || basicExchange;
+
+    if (exchange) {
+      setFormsState(prev => ({
+        ...prev,
+        [id]: {
+          isOpen: true,
+          exchangeId: id,
+          exchangeName: exchange.name,
+          isEdit: false,
+          initialData: {
+            apiKey: '',
+            apiSecret: '',
+            // Используем TypeGuard для правильной типизации
+            nickName: instanceExchange ? instanceExchange.nickName : exchange.name,
+          },
+        },
+      }));
+    }
+  };
+
+  // Функция для закрытия формы
+  const handleCloseForm = (id: string) => {
+    setFormsState(prev => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        isOpen: false,
+      },
+    }));
+  };
+
+  // Функция для обработки отправки формы
+  const handleSubmitApiKeys = (id: string, formData: any) => {
+    console.log('Сохранение API ключей:', formData, 'для биржи ID:', id);
+
+    // В реальном приложении здесь будет запрос к API для сохранения ключей
+    // После успешного сохранения обновляем статус подключения
+
+    if (id) {
+      // Если это биржа из основного списка
+      const exchangeIndex = exchanges.findIndex(ex => ex.id === id);
+      if (exchangeIndex >= 0) {
+        // Здесь должен быть код для обновления состояния через setState
+        // Но так как exchanges не имеет сеттера, это нужно доработать
+        console.log('Обновление статуса для биржи:', exchanges[exchangeIndex].name);
+      }
+
+      // Если это экземпляр биржи
+      const instanceIndex = instances.findIndex(inst => inst.id === id);
+      if (instanceIndex >= 0) {
+        const updatedInstances = [...instances];
+        updatedInstances[instanceIndex] = {
+          ...updatedInstances[instanceIndex],
+          isConnected: true,
+          nickName: formData.nickName || updatedInstances[instanceIndex].nickName,
+        };
+        setInstances(updatedInstances);
+      }
+    }
+
+    // Закрываем форму после отправки
+    setFormsState(prev => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        isOpen: false,
+      },
+    }));
   };
 
   // Обработчик добавления нового экземпляра подключения
@@ -149,7 +234,7 @@ const PersonalAccount: React.FC = () => {
                   >
                     {exchangesOfType.map(exchange => (
                       // Box #4: Контейнер для карточки основного подключения биржи
-                      <Box key={exchange.id} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <Box key={exchange.id} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
                         {/* Paper #1: Карточка основного подключения биржи */}
                         <Paper
                           id={`exchange-card-${exchange.id}`}
@@ -186,12 +271,30 @@ const PersonalAccount: React.FC = () => {
                             )}
                           </Box>
                         </Paper>
+
+                        {/* Форма API ключей прямо под карточкой */}
+                        {formsState[exchange.id] && (
+                          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                            <Box sx={{ width: '100%', maxWidth: exchangeCardStyle.width }}>
+                              <ApiKeyForm
+                                isOpen={formsState[exchange.id].isOpen}
+                                exchangeName={formsState[exchange.id].exchangeName}
+                                onClose={() => handleCloseForm(exchange.id)}
+                                onSubmit={(formData) => handleSubmitApiKeys(exchange.id, formData)}
+                                initialNickName={formsState[exchange.id].initialData.nickName}
+                                initialApiKey={formsState[exchange.id].initialData.apiKey}
+                                initialApiSecret={formsState[exchange.id].initialData.apiSecret}
+                                isEdit={formsState[exchange.id].isEdit}
+                              />
+                            </Box>
+                          </Box>
+                        )}
                       </Box>
                     ))}
 
                     {instancesOfType.map((instance) => (
                       // Box #6: Контейнер для карточки дополнительного подключения
-                      <Box key={instance.id} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <Box key={instance.id} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
                         {/* Paper #2: Карточка дополнительного подключения биржи */}
                         <Paper
                           id={`instance-card-${instance.id}`}
@@ -234,6 +337,24 @@ const PersonalAccount: React.FC = () => {
                             />
                           )}
                         </Paper>
+
+                        {/* Форма API ключей прямо под карточкой */}
+                        {formsState[instance.id] && (
+                          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                            <Box sx={{ width: '100%', maxWidth: exchangeCardStyle.width }}>
+                              <ApiKeyForm
+                                isOpen={formsState[instance.id].isOpen}
+                                exchangeName={formsState[instance.id].exchangeName}
+                                onClose={() => handleCloseForm(instance.id)}
+                                onSubmit={(formData) => handleSubmitApiKeys(instance.id, formData)}
+                                initialNickName={formsState[instance.id].initialData.nickName}
+                                initialApiKey={formsState[instance.id].initialData.apiKey}
+                                initialApiSecret={formsState[instance.id].initialData.apiSecret}
+                                isEdit={formsState[instance.id].isEdit}
+                              />
+                            </Box>
+                          </Box>
+                        )}
                       </Box>
                     ))}
 
