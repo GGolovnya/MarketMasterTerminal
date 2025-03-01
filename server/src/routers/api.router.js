@@ -15,6 +15,6 @@ router.use("/token", tokenRouter); // Обновление токенов
 // Защищенные маршруты - требуют валидный access token
 router.use("/bybit", verifyAccessToken, bybitRouter); // Bybit API
 router.use("/binance", verifyAccessToken, binanceRouter); // Binance API
-router.use("/exchange-keys", verifyAccessToken, exchangeKeysRouter)
+router.use("/exchange-keys", verifyAccessToken, exchangeKeysRouter) // Подключение бирж (CRUD по API бирж)
 
 module.exports = router;

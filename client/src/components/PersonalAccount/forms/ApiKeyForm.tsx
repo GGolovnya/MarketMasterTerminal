@@ -8,26 +8,33 @@ import {
   Collapse,
   InputAdornment,
   IconButton,
+  Alert,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../redux/store';
 
+// Определяем типы для пропсов компонента
 interface ApiKeyFormProps {
-  isOpen: boolean;
-  exchangeName: string;
-  onClose: () => void;
-  onSubmit: (formData: FormData) => void;
-  initialNickName?: string;
-  initialApiKey?: string;
-  initialApiSecret?: string;
-  isEdit?: boolean;
+  isOpen: boolean;          // Флаг, отвечающий за видимость формы
+  exchangeName: string;     // Название биржи
+  onClose: () => void;      // Функция закрытия формы
+  onSubmit: (formData: FormData) => void;  // Функция отправки данных формы
+  initialNickName?: string;  // Начальное значение для названия подключения
+  initialApiKey?: string;    // Начальное значение API ключа
+  initialApiSecret?: string; // Начальное значение API секрета
+  isEdit?: boolean;         // Флаг режима редактирования
 }
 
+// Определяем структуру данных формы
 interface FormData {
-  apiKey: string;
-  apiSecret: string;
-  nickName: string;
+  exchangeName: string;  // Название биржи
+  apiKey: string;        // API ключ
+  apiSecret: string;     // API секрет
+  nickName: string;      // Название подключения
 }
 
+// Основной компонент формы API ключей
 const ApiKeyForm: React.FC<ApiKeyFormProps> = ({
   isOpen,
   exchangeName,
@@ -38,13 +45,21 @@ const ApiKeyForm: React.FC<ApiKeyFormProps> = ({
   initialApiSecret = '',
   isEdit = false,
 }) => {
+  // Состояние для хранения данных формы
   const [formData, setFormData] = useState<FormData>({
+    exchangeName,
     apiKey: initialApiKey,
     apiSecret: initialApiSecret,
-    nickName: initialNickName,
+    nickName: initialNickName || `${exchangeName} - Основное`,
   });
+
+  // Состояние для отображения/скрытия API секрета
   const [showApiSecret, setShowApiSecret] = useState<boolean>(false);
 
+  // Получаем статус и ошибку из Redux
+  const { status, error } = useSelector((state: RootState) => state.exchangeApiKeys);
+
+  // Обработчик изменения полей формы
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prevData => ({
@@ -53,13 +68,16 @@ const ApiKeyForm: React.FC<ApiKeyFormProps> = ({
     }));
   };
 
+  // Обработчик отправки формы
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    onSubmit(formData);
+    e.preventDefault();  // Предотвращаем стандартное поведение формы
+    onSubmit(formData);  // Вызываем функцию отправки с данными формы
   };
 
   return (
+    // Компонент Collapse для анимированного появления/исчезновения
     <Collapse in={isOpen} timeout="auto" unmountOnExit>
+      {/* Контейнер формы */}
       <Paper
         id="api-key-form-paper"
         sx={{
@@ -72,11 +90,21 @@ const ApiKeyForm: React.FC<ApiKeyFormProps> = ({
           boxShadow: 2,
         }}
       >
+        {/* Заголовок формы */}
         <Typography id="form-title" variant="subtitle1" sx={{ mb: 2 }}>
-          {isEdit ? 'Редактировать ключи' : `Подключение ${exchangeName}`}
+          {isEdit ? `Редактировать ключи ${exchangeName}` : `Подключение ${exchangeName}`}
         </Typography>
 
+        {/* Отображение ошибки, если есть */}
+        {error && status === 'failed' && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        {/* Форма ввода данных */}
         <form id="api-key-form" onSubmit={handleSubmit}>
+          {/* Поле для ввода API Key */}
           <TextField
             id="api-key-input"
             name="apiKey"
@@ -85,11 +113,13 @@ const ApiKeyForm: React.FC<ApiKeyFormProps> = ({
             onChange={handleChange}
             fullWidth
             margin="normal"
-            required
+            required={!isEdit}
             variant="outlined"
             size="small"
+            disabled={status === 'loading'}
           />
 
+          {/* Поле для ввода API Secret с возможностью показать/скрыть */}
           <TextField
             id="api-secret-input"
             name="apiSecret"
@@ -99,9 +129,10 @@ const ApiKeyForm: React.FC<ApiKeyFormProps> = ({
             type={showApiSecret ? 'text' : 'password'}
             fullWidth
             margin="normal"
-            required
+            required={!isEdit}
             variant="outlined"
             size="small"
+            disabled={status === 'loading'}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -110,6 +141,7 @@ const ApiKeyForm: React.FC<ApiKeyFormProps> = ({
                     aria-label="toggle password visibility"
                     onClick={() => setShowApiSecret(!showApiSecret)}
                     edge="end"
+                    disabled={status === 'loading'}
                   >
                     {showApiSecret ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
@@ -118,6 +150,7 @@ const ApiKeyForm: React.FC<ApiKeyFormProps> = ({
             }}
           />
 
+          {/* Поле для ввода названия подключения */}
           <TextField
             id="nickname-input"
             name="nickName"
@@ -128,25 +161,32 @@ const ApiKeyForm: React.FC<ApiKeyFormProps> = ({
             margin="normal"
             variant="outlined"
             size="small"
+            required
             placeholder="Например: Торговый, Арбитраж"
+            disabled={status === 'loading'}
           />
 
+          {/* Контейнер для кнопок действий */}
           <Box id="form-actions" sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+            {/* Кнопка отмены */}
             <Button
               id="cancel-button"
               variant="outlined"
               onClick={onClose}
               size="small"
+              disabled={status === 'loading'}
             >
               Отмена
             </Button>
+            {/* Кнопка сохранения/отправки формы */}
             <Button
               id="submit-button"
               variant="contained"
               type="submit"
               size="small"
+              disabled={status === 'loading'}
             >
-              {isEdit ? 'Обновить' : 'Сохранить'}
+              {status === 'loading' ? 'Сохранение...' : 'Сохранить'}
             </Button>
           </Box>
         </form>
