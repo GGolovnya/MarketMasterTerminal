@@ -46,7 +46,7 @@ class ApiKeyService {
         userId,
         isActive: true
       },
-      attributes: ['id', 'exchangeName', 'nickName', 'createdAt', 'updatedAt']
+      attributes: ['id', 'exchangeName', 'nickName', 'isActive', 'createdAt', 'updatedAt']
     });
   }
 

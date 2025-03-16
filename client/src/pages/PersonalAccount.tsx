@@ -69,7 +69,7 @@ const PersonalAccount: React.FC = () => {
   // Обновление состояния isConnected для availableExchanges на основе данных из Redux
   useEffect(() => {
     if (apiKeys.length > 0) {
-      // Создаем копию доступных бирж для обновления
+    // Создаем копию доступных бирж для обновления
       const updatedAvailableExchanges = [...memoizedAvailableExchanges];
 
       // Для каждого ключа API из Redux обновляем соответствующую биржу
@@ -79,10 +79,10 @@ const PersonalAccount: React.FC = () => {
         );
 
         if (matchingExchangeIndex !== -1) {
-          // Обновляем статус подключения
+        // Обновляем статус подключения с проверкой наличия isActive
           updatedAvailableExchanges[matchingExchangeIndex] = {
             ...updatedAvailableExchanges[matchingExchangeIndex],
-            isConnected: key.isActive,
+            isConnected: key.isActive === undefined ? false : key.isActive,
           };
         }
       });
@@ -96,7 +96,7 @@ const PersonalAccount: React.FC = () => {
         parentId: updatedAvailableExchanges.find(e => e.name === key.exchangeName)?.id || '',
         name: key.exchangeName,
         nickName: key.nickName,
-        isConnected: key.isActive,
+        isConnected: key.isActive === undefined ? false : key.isActive,
       }));
       setInstances(newInstances);
     }
@@ -199,8 +199,6 @@ const PersonalAccount: React.FC = () => {
 
   // Функция для обработки отправки формы
   const handleSubmitApiKeys = (id: string, formData: any) => {
-    console.log('Сохранение API ключей:', formData, 'для биржи ID:', id);
-
     // Если это запись из БД (id начинается с 'db_')
     if (id.startsWith('db_')) {
       const dbId = parseInt(id.substring(3), 10);

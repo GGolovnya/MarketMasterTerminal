@@ -6,7 +6,13 @@ export const getApiKeysInfo = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get('/api/exchange-keys/');
-      return response.data;
+      // Обработка данных, чтобы гарантировать наличие isActive
+      const processedData = response.data.map(key => ({
+        ...key,
+        isActive: key.isActive !== undefined ? key.isActive : false, // Значение по умолчанию false
+      }));
+
+      return processedData;
     } catch (error) {
       return rejectWithValue('Не удалось загрузить информацию об API ключах');
     }
